@@ -1,0 +1,33 @@
+#pragma once
+
+#include <string>
+#include <vector>
+
+namespace xge {
+
+    class Resources {
+
+    public:
+
+        static Resources *assets;
+        static Resources *userData;
+
+        virtual std::vector<char> readFile(std::string filename) = 0;
+
+    };
+
+    class FileResources : public Resources {
+
+    protected:
+        std::string basePath;
+
+    public:
+        FileResources(std::string basePath) : basePath(basePath) {
+            //
+        }
+
+        virtual std::vector<char> readFile(std::string filename);
+
+    };
+
+}
