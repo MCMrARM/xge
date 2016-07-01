@@ -7,7 +7,25 @@
 
 using namespace xge;
 
+LinuxPlatform *LinuxPlatform::instance = nullptr;
+
+LinuxPlatform::LinuxPlatform() {
+    if (LinuxPlatform::instance != nullptr) {
+        Log::error("LinuxPlatform", "There can be only one LinuxPlatform instance at a time.");
+        throw std::logic_error("There can be only one LinuxPlatform instance at a time.");
+    }
+    LinuxPlatform::instance = this;
+}
+
+LinuxPlatform::~LinuxPlatform() {
+    LinuxPlatform::instance = nullptr;
+}
+
 void LinuxPlatform::startGame(Game &game) {
+    if (gameInstance != nullptr) {
+        Log::error("LinuxPlatform", "There can be only one game running at a time.");
+        throw std::logic_error("There can be only one game running at a time.");
+    }
     if (!glfwInit()) {
         Log::error("GLFW", "Call to glfwInit failed");
         return;
@@ -21,6 +39,9 @@ void LinuxPlatform::startGame(Game &game) {
         return;
     }
     glfwMakeContextCurrent(window);
+    gameInstance = &game;
+    glfwSetCursorPosCallback(window, LinuxPlatform::glfwMousePosCallback);
+    glfwSetMouseButtonCallback(window, LinuxPlatform::glfwMouseButtonCallback);
     GLenum err = glewInit();
     if (err != GLEW_OK)
         exit(1);
@@ -31,5 +52,17 @@ void LinuxPlatform::startGame(Game &game) {
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+    gameInstance = nullptr;
     glfwTerminate();
+}
+
+void LinuxPlatform::glfwMousePosCallback(GLFWwindow *window, double xpos, double ypos) {
+    LinuxPlatform::instance->setMousePos((int) xpos, (int) ypos);
+}
+
+void LinuxPlatform::glfwMouseButtonCallback(GLFWwindow *window, int button, int action, int mods) {
+    if (action == GLFW_PRESS)
+        LinuxPlatform::instance->setMouseButtonPressed(button, true);
+    else if (action == GLFW_RELEASE)
+        LinuxPlatform::instance->setMouseButtonPressed(button, false);
 }

@@ -33,6 +33,7 @@ namespace xge {
         inline void setUniform(ShaderUniform uniform, ShaderValue value) {
             uniforms[uniform.uniformId] = { uniform, { value } };
         }
+        void setUniform(ShaderUniform uniform, ShaderValue *value, int count = 1); // This will copy the array specified in parameter.
 
         void draw();
 

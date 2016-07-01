@@ -196,7 +196,5 @@ void ShaderUniform::set(ShaderValue *value, int count) {
         case ShaderValueType::Matrix4x4:
             glUniformMatrix4fv(uniformId, count, GL_FALSE, (float*) value);
             break;
-        default:
-            return;
     }
 }

@@ -4,6 +4,7 @@
 #include <vector>
 #include "Shader.h"
 #include "Mesh.h"
+#include <glm/gtc/type_ptr.hpp>
 
 namespace xge {
 
@@ -34,6 +35,18 @@ namespace xge {
         }
         inline MeshBuilder &setUniform(ShaderUniform uniform, ShaderValue value) {
             mesh->setUniform(uniform, value);
+            return *this;
+        }
+        inline MeshBuilder &setUniform(ShaderUniform uniform, ShaderValue *value, int count = 1) {
+            mesh->setUniform(uniform, value, count);
+            return *this;
+        }
+        /**
+         * Use this function to set an uniform using an GLM type.
+         */
+        template <typename T>
+        inline MeshBuilder &setUniform(ShaderUniform uniform, T value) {
+            mesh->setUniform(uniform, (ShaderValue *) glm::value_ptr(value));
             return *this;
         }
 
