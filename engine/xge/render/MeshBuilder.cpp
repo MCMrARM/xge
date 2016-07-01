@@ -51,7 +51,7 @@ MeshBuilder &MeshBuilder::push(...) {
     return *this;
 }
 
-std::shared_ptr<Mesh> MeshBuilder::build() {
+std::shared_ptr<Mesh> MeshBuilder::build(bool reuse) {
     std::shared_ptr<Mesh> ret = std::move(mesh);
     ret->vertexCount = vertexCount;
     auto itV = attributeValues.begin();
@@ -63,6 +63,15 @@ std::shared_ptr<Mesh> MeshBuilder::build() {
         val.buffer.upload(it->type, *itV, *itU);
         ret->attributes[it->attributeId] = std::move(val);
     }
-    mesh.reset();
+    if (reuse) {
+        mesh = std::shared_ptr<Mesh>(new Mesh());
+        mesh->uniforms = ret->uniforms;
+    } else {
+        mesh.reset();
+        attributes.clear();
+        attributeUsages.clear();
+        attributeValues.clear();
+        vertexCount = 0;
+    }
     return ret;
 }
