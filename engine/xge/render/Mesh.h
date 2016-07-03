@@ -17,6 +17,7 @@ namespace xge {
         struct UniformValue {
             ShaderUniform uniform;
             std::vector<ShaderValue> value;
+            Texture *texture;
         };
 
         enum class DrawMode {
@@ -34,6 +35,7 @@ namespace xge {
             uniforms[uniform.uniformId] = { uniform, { value } };
         }
         void setUniform(ShaderUniform uniform, ShaderValue *value, int count = 1); // This will copy the array specified in parameter.
+        void setUniform(ShaderUniform uniform, Texture *texture);
 
         void draw();
 

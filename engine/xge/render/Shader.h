@@ -7,6 +7,8 @@
 
 namespace xge {
 
+    class Texture;
+
     enum class ShaderType {
         Vertex, Fragment,
         // gles 3.1+
@@ -30,6 +32,7 @@ namespace xge {
         ShaderValueType type;
 
         void set(ShaderValue *value, int count = 1);
+        void set(Texture *value);
     };
 
     class Shader {

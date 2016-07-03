@@ -3,6 +3,8 @@
 
 #include <xge/opengl.h>
 #include <xge/util/Resources.h>
+#include <xge/util/Log.h>
+#include "Texture.h"
 
 using namespace xge;
 
@@ -196,5 +198,18 @@ void ShaderUniform::set(ShaderValue *value, int count) {
         case ShaderValueType::Matrix4x4:
             glUniformMatrix4fv(uniformId, count, GL_FALSE, (float*) value);
             break;
+        default:
+            Log::error("ShaderUniform", "Unsupported value type.");
     }
+}
+
+void ShaderUniform::set(Texture *value) {
+    int bindId = value->getBindId();
+#ifndef NDEBUG
+    if (bindId == -1) {
+        Log::error("ShaderUniform", "Cannot set texture: it's not bound.");
+        return;
+    }
+#endif
+    glUniform1i(uniformId, bindId);
 }

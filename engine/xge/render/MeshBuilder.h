@@ -41,6 +41,10 @@ namespace xge {
             mesh->setUniform(uniform, value, count);
             return *this;
         }
+        inline MeshBuilder &setUniform(ShaderUniform uniform, Texture *texture) {
+            mesh->setUniform(uniform, texture);
+            return *this;
+        }
         /**
          * Use this function to set an uniform using an GLM type.
          */

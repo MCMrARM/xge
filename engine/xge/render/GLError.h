@@ -12,6 +12,7 @@ namespace xge {
         int errorCode;
         std::string throwStr;
 
+        void setErrorDescFromCode();
         void buildErrorStr();
 
     public:
@@ -21,6 +22,13 @@ namespace xge {
         GLError();
         /**
          * This constructor will use the error code from the parameters.
+         */
+        GLError(int code) : errorCode(code) {
+            setErrorDescFromCode();
+            buildErrorStr();
+        }
+        /**
+         * This constructor will use the error code and description from the parameters.
          */
         GLError(int code, std::string str) : errorCode(code), errorStr(str) {
             buildErrorStr();
@@ -37,6 +45,11 @@ namespace xge {
         inline std::string const &getErrorString() const {
             return throwStr;
         }
+
+        /**
+         * This function will check for OpenGL errors, and if there is any, it'll throw a GLError.
+         */
+        static void checkAndThrow();
 
     };
 

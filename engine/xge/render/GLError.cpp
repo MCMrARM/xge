@@ -7,12 +7,22 @@ using namespace xge;
 
 GLError::GLError() {
     errorCode = glGetError();
-    errorStr = "Unknown"; // TODO
+    setErrorDescFromCode();
     buildErrorStr();
+}
+
+void GLError::setErrorDescFromCode() {
+    errorStr = "Unknown"; // TODO
 }
 
 void GLError::buildErrorStr() {
     std::stringstream ss;
     ss << "OpenGL Error: " << errorStr << " (" << errorCode << ")";
     throwStr = ss.str();
+}
+
+void GLError::checkAndThrow() {
+    int err = glGetError();
+    if (err != 0)
+        throw GLError(err);
 }
