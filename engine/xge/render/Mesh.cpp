@@ -15,7 +15,7 @@ void Mesh::draw() {
     for (auto &p : uniforms) {
         if (p.second.texture != nullptr) {
             p.second.texture->bind(nextTexId++);
-            p.second.uniform.set(p.second.texture);
+            p.second.uniform.set(p.second.texture.get());
         } else
             p.second.uniform.set(p.second.value.data(), (int) (p.second.value.size() / GetShaderValueTypeComponentCount(p.second.uniform.type)));
     }
@@ -33,6 +33,6 @@ void Mesh::setUniform(ShaderUniform uniform, ShaderValue *value, int count) {
     uniforms[uniform.uniformId] = { uniform, std::move(val), nullptr };
 }
 
-void Mesh::setUniform(ShaderUniform uniform, Texture *texture) {
+void Mesh::setUniform(ShaderUniform uniform, std::shared_ptr<Texture> texture) {
     uniforms[uniform.uniformId] = { uniform, std::vector<ShaderValue>(), texture };
 }

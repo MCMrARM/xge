@@ -2,6 +2,7 @@
 
 #include <unordered_map>
 #include <vector>
+#include <memory>
 #include "Shader.h"
 #include "GPUBuffer.h"
 
@@ -17,7 +18,7 @@ namespace xge {
         struct UniformValue {
             ShaderUniform uniform;
             std::vector<ShaderValue> value;
-            Texture *texture;
+            std::shared_ptr<Texture> texture;
         };
 
         enum class DrawMode {
@@ -35,7 +36,7 @@ namespace xge {
             uniforms[uniform.uniformId] = { uniform, { value } };
         }
         void setUniform(ShaderUniform uniform, ShaderValue *value, int count = 1); // This will copy the array specified in parameter.
-        void setUniform(ShaderUniform uniform, Texture *texture);
+        void setUniform(ShaderUniform uniform, std::shared_ptr<Texture> texture);
 
         void draw();
 

@@ -41,7 +41,7 @@ namespace xge {
             mesh->setUniform(uniform, value, count);
             return *this;
         }
-        inline MeshBuilder &setUniform(ShaderUniform uniform, Texture *texture) {
+        inline MeshBuilder &setUniform(ShaderUniform uniform, std::shared_ptr<Texture> texture) {
             mesh->setUniform(uniform, texture);
             return *this;
         }
