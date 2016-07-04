@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstring>
 #include "Log.h"
+#include "Endianness.h"
 
 namespace xge {
 
@@ -16,8 +17,6 @@ namespace xge {
 
     public:
         DataBuffer() {
-            char d[] = {1, 0};
-            isSystemLittleEndian = (*((short *) d) == 1);
         }
 
         DataBuffer(char *data, size_t size) : DataBuffer() {
@@ -29,30 +28,11 @@ namespace xge {
             this->size = size;
         }
 
-        template <typename T>
-        inline static void swapEndian(T &ptr) {
-            char *data = (char *) &ptr;
-            char inData[sizeof(T)];
-            memcpy(inData, data, sizeof(T));
-            for (int i = sizeof(T) - 1; i >= 0; i--) {
-                data[sizeof(T) - 1 - i] = inData[i];
-            }
-        }
-
-        /**
-         * This function will compare the endianess to platform endianess and swap it if needed.
-         */
-        template <typename T>
-        inline void swapEndianTo(T &ptr, bool toLittleEndian) {
-            if (toLittleEndian != isSystemLittleEndian)
-                swapEndian<T>(ptr);
-        }
-
         /**
          * This function reads a primitive type from the buffer. Trying to read non-primitive types can lead to errors.
          */
         template <typename T>
-        inline T get(size_t off, bool littleEndian = true) {
+        inline T get(size_t off, Endianness endianness = Endianness::LITTLE) {
 #ifndef NDEBUG
             if (off < 0 || off + sizeof(T) >= size) {
                 Log::error("DataBuffer", "Trying to read outside DataBuffer boundaries.");
@@ -60,7 +40,7 @@ namespace xge {
             }
 #endif
             T val = (T &) data[off];
-            swapEndianTo(val, littleEndian);
+            EndiannessUtil::swapEndianTo(val, endianness);
             return val;
         }
 
@@ -68,14 +48,14 @@ namespace xge {
          * This function writes a primitive type to the buffer. Trying to write non-primitive types can lead to errors.
          */
         template <typename T>
-        inline void set(size_t off, T val, bool littleEndian = true) {
+        inline void set(size_t off, T val, Endianness endianness = Endianness::LITTLE) {
 #ifndef NDEBUG
             if (off < 0 || off + sizeof(T) >= size) {
                 Log::error("DataBuffer", "Trying to write outside DataBuffer boundaries.");
                 return;
             }
 #endif
-            swapEndianTo(val, littleEndian);
+            EndiannessUtil::swapEndianTo(val, endianness);
             (T &) data[off] = val;
         }
 
