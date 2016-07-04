@@ -13,9 +13,9 @@ void Mouse::setButtonPressed(int button, bool pressed) {
         return;
     if (pressed) {
         this->pressed[button] = true;
-        listener.onPointerPress(PointerPressEvent (this, x, y));
+        listener.onPointerPress(PointerPressEvent (this, x, y, button));
     } else {
-        listener.onPointerRelease(PointerReleaseEvent (this, x, y));
+        listener.onPointerRelease(PointerReleaseEvent (this, x, y, button));
         this->pressed[button] = false;
     }
 }
