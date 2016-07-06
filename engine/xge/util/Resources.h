@@ -2,6 +2,8 @@
 
 #include <string>
 #include <vector>
+#include <memory>
+#include "InputStream.h"
 
 namespace xge {
 
@@ -13,6 +15,7 @@ namespace xge {
         static Resources *userData;
 
         virtual std::vector<char> readFile(std::string filename) = 0;
+        virtual std::unique_ptr<InputStream> open(std::string filename) = 0;
 
     };
 
@@ -27,6 +30,7 @@ namespace xge {
         }
 
         virtual std::vector<char> readFile(std::string filename);
+        virtual std::unique_ptr<InputStream> open(std::string filename);
 
     };
 

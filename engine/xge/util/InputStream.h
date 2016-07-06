@@ -7,6 +7,7 @@ namespace xge {
     class InputStream {
 
     public:
+        virtual ~InputStream() { }
         virtual size_t read(char *data, size_t size) = 0;
 
     };

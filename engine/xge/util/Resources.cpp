@@ -1,7 +1,8 @@
 #include "Resources.h"
-#include "Log.h"
 
 #include <fstream>
+#include "Log.h"
+#include "FileInputStream.h"
 
 using namespace xge;
 
@@ -25,4 +26,8 @@ std::vector<char> FileResources::readFile(std::string filename) {
     }
     fs.close();
     return std::move(data);
+}
+
+std::unique_ptr<InputStream> FileResources::open(std::string filename) {
+    return std::unique_ptr<FileInputStream>(new FileInputStream(basePath + "/" + filename));
 }

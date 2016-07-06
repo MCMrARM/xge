@@ -2,6 +2,8 @@
 
 namespace xge {
 
+    class Image;
+
     enum class TextureInternalFormat {
         ALPHA, RGB, RGBA, LUMINANCE, LUMINANCE_ALPHA
     };
@@ -26,6 +28,10 @@ namespace xge {
             t.hasId = false;
             t.id = 0;
         }
+        /**
+         * This constructor will create a new texture and upload the specified Image's data to GPU.
+         */
+        Texture(Image const &image);
         ~Texture();
 
         inline unsigned int getId() {

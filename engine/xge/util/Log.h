@@ -10,6 +10,15 @@
         vlog(LogLevel::LOG_TRACE, tag, text, args); \
         va_end(args); \
     }
+#ifndef NDEBUG
+#define XGEAssert(assert) \
+    if (!(assert)) { \
+        Log::error("Assert", "Assert failed: %s", #assert); \
+        abort(); \
+    }
+#else
+#define XGEAssert(assert)
+#endif
 
 namespace xge {
 

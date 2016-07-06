@@ -3,8 +3,29 @@
 #include <xge/opengl.h>
 #include "GLError.h"
 #include "../util/Log.h"
+#include "../util/Image.h"
 
 using namespace xge;
+
+Texture::Texture(Image const &image) {
+    TextureFormat format;
+    TextureInternalFormat internalFormat;
+    switch (image.getFormat()) {
+        case ImageFormat::GRAY:
+            format = TextureFormat::ALPHA;
+            internalFormat = TextureInternalFormat::ALPHA;
+            break;
+        case ImageFormat::RGB:
+            format = TextureFormat::RGB;
+            internalFormat = TextureInternalFormat::RGB;
+            break;
+        case ImageFormat::RGBA:
+            format = TextureFormat::RGBA;
+            internalFormat = TextureInternalFormat::RGBA;
+            break;
+    }
+    upload(internalFormat, format, (char *) image.getData().data(), image.getWidth(), image.getHeight(), 0);
+}
 
 Texture::~Texture() {
     if (hasId) {
@@ -62,6 +83,8 @@ void Texture::upload(TextureInternalFormat internalFormat, TextureFormat format,
             break;
     }
     glBindTexture(GL_TEXTURE_2D, id);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexImage2D(GL_TEXTURE_2D, level, glInternalFormat, w, h, 0, glFormat, glType, data);
 #ifndef NDEBUG
     GLError::checkAndThrow();
