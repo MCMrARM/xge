@@ -22,12 +22,13 @@ namespace xge {
         };
 
         enum class DrawMode {
-            TRIANGLES, TRIANGLE_STRIP, TRAINGLE_FAN, POINTS, LINES, LINE_STRIP, LINE_LOOP
+            TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN, POINTS, LINES, LINE_STRIP, LINE_LOOP
         };
 
         unsigned int vertexCount = 0;
         std::unordered_map<int, AttributeValue> attributes;
         std::unordered_map<int, UniformValue> uniforms;
+        DrawMode drawMode = DrawMode::TRIANGLES;
 
         inline void setUniform(ShaderUniform uniform, std::vector<ShaderValue> value) {
             uniforms[uniform.uniformId] = { uniform, std::move(value) };

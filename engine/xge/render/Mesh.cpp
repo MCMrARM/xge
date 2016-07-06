@@ -19,7 +19,31 @@ void Mesh::draw() {
         } else
             p.second.uniform.set(p.second.value.data(), (int) (p.second.value.size() / GetShaderValueTypeComponentCount(p.second.uniform.type)));
     }
-    glDrawArrays(GL_TRIANGLES, 0, vertexCount);
+    GLenum drawMode = 0;
+    switch (this->drawMode) {
+        case DrawMode::TRIANGLES:
+            drawMode = GL_TRIANGLES;
+            break;
+        case DrawMode::TRIANGLE_STRIP:
+            drawMode = GL_TRIANGLE_STRIP;
+            break;
+        case DrawMode::TRIANGLE_FAN:
+            drawMode = GL_TRIANGLE_FAN;
+            break;
+        case DrawMode::POINTS:
+            drawMode = GL_POINTS;
+            break;
+        case DrawMode::LINES:
+            drawMode = GL_LINES;
+            break;
+        case DrawMode::LINE_STRIP:
+            drawMode = GL_LINE_STRIP;
+            break;
+        case DrawMode::LINE_LOOP:
+            drawMode = GL_LINE_LOOP;
+            break;
+    }
+    glDrawArrays(drawMode, 0, vertexCount);
     for (auto &p : uniforms) {
         if (p.second.texture != nullptr) {
             p.second.texture->unbind();

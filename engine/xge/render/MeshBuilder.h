@@ -18,8 +18,13 @@ namespace xge {
         unsigned int vertexCount = 0;
 
     public:
-        MeshBuilder() {
+        MeshBuilder(Mesh::DrawMode drawMode = Mesh::DrawMode::TRIANGLES) {
             mesh = std::shared_ptr<Mesh>(new Mesh());
+            mesh->drawMode = drawMode;
+        }
+
+        inline void setDrawMode(Mesh::DrawMode drawMode) {
+            mesh->drawMode = drawMode;
         }
 
         inline MeshBuilder &addAttribute(ShaderAttribute attribute, GPUBuffer::Usage usage = GPUBuffer::Usage::Static) {
