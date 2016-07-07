@@ -5,8 +5,11 @@
 #include <xge/util/Resources.h>
 #include <xge/util/Log.h>
 #include "Texture.h"
+#include "VertexAttribArrayManager.h"
 
 using namespace xge;
+
+ShaderProgram *ShaderProgram::current;
 
 Shader::Shader(ShaderType type) : type(type) {
     GLenum shaderType = 0;
@@ -98,6 +101,8 @@ ShaderProgram::ShaderProgram() {
 }
 
 ShaderProgram::~ShaderProgram() {
+    if (current == this)
+        current = nullptr;
     glDeleteProgram(id);
 }
 
@@ -127,10 +132,13 @@ ShaderAttribute ShaderProgram::getAttribute(std::string name, ShaderValueType ty
     if (attributes.count(name) > 0) {
         return { attributes.at(name), type };
     }
+    use();
     int attribLoc = glGetAttribLocation(id, name.c_str());
     if (attribLoc == -1)
         throw GLError();
+    VertexAttribArrayManager::instance.enable(attribLoc);
     attributes[name] = attribLoc;
+    vertexAttribIds.insert(attribLoc);
     return { attribLoc, type };
 }
 
@@ -138,6 +146,7 @@ ShaderUniform ShaderProgram::getUniform(std::string name, ShaderValueType type) 
     if (uniforms.count(name) > 0) {
         return { uniforms.at(name), type };
     }
+    use();
     int uniformLoc = glGetUniformLocation(id, name.c_str());
     if (uniformLoc == -1)
         throw GLError();
@@ -146,9 +155,11 @@ ShaderUniform ShaderProgram::getUniform(std::string name, ShaderValueType type) 
 }
 
 void ShaderProgram::use() {
+    if (id == 0 || current == this)
+        return;
     glUseProgram(id);
-    for (auto const &attrib : attributes)
-        glEnableVertexAttribArray((GLuint) attrib.second);
+    VertexAttribArrayManager::instance.set(vertexAttribIds);
+    current = this;
 }
 
 void ShaderUniform::set(ShaderValue *value, int count) {
@@ -189,13 +200,13 @@ void ShaderUniform::set(ShaderValue *value, int count) {
         case ShaderValueType::UIVec4:
             glUniform4uiv(uniformId, count, (unsigned int*) value);
             break;
-        case ShaderValueType::Matrix2x2:
+        case ShaderValueType::Matrix2:
             glUniformMatrix2fv(uniformId, count, GL_FALSE, (float*) value);
             break;
-        case ShaderValueType::Matrix3x3:
+        case ShaderValueType::Matrix3:
             glUniformMatrix3fv(uniformId, count, GL_FALSE, (float*) value);
             break;
-        case ShaderValueType::Matrix4x4:
+        case ShaderValueType::Matrix4:
             glUniformMatrix4fv(uniformId, count, GL_FALSE, (float*) value);
             break;
         default:

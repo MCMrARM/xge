@@ -65,6 +65,8 @@ std::shared_ptr<Mesh> MeshBuilder::build(bool reuse) {
     }
     if (reuse) {
         mesh = std::shared_ptr<Mesh>(new Mesh());
+        mesh->program = ret->program;
+        mesh->drawMode = ret->drawMode;
         mesh->uniforms = ret->uniforms;
     } else {
         mesh.reset();

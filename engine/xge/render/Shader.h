@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 #include "ShaderValueType.h"
 
 namespace xge {
@@ -31,6 +32,9 @@ namespace xge {
         int uniformId;
         ShaderValueType type;
 
+        /**
+         * Before setting this uniform, first make sure the owner program is bound.
+         */
         void set(ShaderValue *value, int count = 1);
         void set(Texture *value);
     };
@@ -97,6 +101,7 @@ namespace xge {
     private:
         unsigned int id;
         std::map<std::string, int> attributes;
+        std::set<int> vertexAttribIds;
         std::map<std::string, int> uniforms;
 
     public:
@@ -112,6 +117,9 @@ namespace xge {
 
         ShaderAttribute getAttribute(std::string name, ShaderValueType type);
         ShaderUniform getUniform(std::string name, ShaderValueType type);
+
+        static ShaderProgram* current;
+        static std::vector<int> enabledVertexArrays;
 
     };
 

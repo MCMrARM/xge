@@ -7,6 +7,7 @@
 using namespace xge;
 
 void Mesh::draw() {
+    program->use();
     for (auto &p : attributes) {
         glBindBuffer(GL_ARRAY_BUFFER, p.second.buffer.getId());
         glVertexAttribPointer((GLuint) p.second.attribute.attributeId, GetShaderValueTypeComponentCount(p.second.attribute.type), GL_FLOAT, GL_FALSE, 0, 0);
