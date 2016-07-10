@@ -13,7 +13,7 @@
 #ifndef NDEBUG
 #define XGEAssert(assert) \
     if (!(assert)) { \
-        Log::error("Assert", "Assert failed: %s", #assert); \
+        xge::Log::error("Assert", "Assert failed: %s", #assert); \
         abort(); \
     }
 #else

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <vector>
 #include <cstdlib>
 #include "Log.h"
@@ -98,7 +99,9 @@ namespace xge {
             }
         }
 
-        static Image fromPNG(InputStream &stream);
+        static Image fromStream(InputStream &stream);
+
+        static Image fromAsset(std::string name);
 
     };
 

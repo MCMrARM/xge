@@ -1,10 +1,12 @@
 #include "Image.h"
-#include "InputStream.h"
+
 #include <png.h>
+#include "InputStream.h"
+#include "Resources.h"
 
 using namespace xge;
 
-Image Image::fromPNG(InputStream &stream) {
+Image Image::fromStream(InputStream &stream) {
     char sig[8];
     XGEAssert(stream.read(sig, 8) == 8);
     int i = png_sig_cmp((png_bytep) sig, 0, 8);
@@ -75,4 +77,8 @@ Image Image::fromPNG(InputStream &stream) {
     png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
 
     return Image(std::move(data), (int) width, (int) height, format);
+}
+
+Image Image::fromAsset(std::string name) {
+    return Image::fromStream(*Resources::assets->open(name));
 }

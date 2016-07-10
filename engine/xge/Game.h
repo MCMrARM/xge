@@ -41,10 +41,10 @@ namespace xge {
             return mouse;
         }
 
-        inline void addPointerListener(std::unique_ptr<PointerEventListener> listener) {
+        inline void addPointerListener(std::shared_ptr<PointerEventListener> listener) {
             pointerListeners.insert(std::move(listener));
         }
-        inline void removePointerListener(std::unique_ptr<PointerEventListener> listener) {
+        inline void removePointerListener(std::shared_ptr<PointerEventListener> listener) {
             pointerListeners.erase(std::move(listener));
         }
         inline void removeAllPointerListeners() {
