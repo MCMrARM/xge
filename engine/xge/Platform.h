@@ -10,6 +10,8 @@ namespace xge {
         Game *gameInstance = nullptr;
         void setMouseButtonPressed(int button, bool pressed);
         void setMousePos(int x, int y);
+        void setKeyboardButton(int key, bool pressed,
+                               bool shift = false, bool control = false, bool alt = false, bool super = false);
 
     public:
         virtual void startGame(Game &game) = 0;

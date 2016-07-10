@@ -42,6 +42,8 @@ void LinuxPlatform::startGame(Game &game) {
     gameInstance = &game;
     glfwSetCursorPosCallback(window, LinuxPlatform::glfwMousePosCallback);
     glfwSetMouseButtonCallback(window, LinuxPlatform::glfwMouseButtonCallback);
+    glfwSetKeyCallback(window, LinuxPlatform::glfwKeyCallback);
+    glfwSetInputMode(window, GLFW_STICKY_KEYS, 1);
     GLenum err = glewInit();
     if (err != GLEW_OK)
         exit(1);
@@ -65,4 +67,12 @@ void LinuxPlatform::glfwMouseButtonCallback(GLFWwindow *window, int button, int 
         LinuxPlatform::instance->setMouseButtonPressed(button, true);
     else if (action == GLFW_RELEASE)
         LinuxPlatform::instance->setMouseButtonPressed(button, false);
+}
+
+void LinuxPlatform::glfwKeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+    if (action != GLFW_PRESS && action != GLFW_RELEASE)
+        return;
+    LinuxPlatform::instance->setKeyboardButton(key, action == GLFW_PRESS, (mods & GLFW_MOD_SHIFT) != 0,
+                                               (mods & GLFW_MOD_CONTROL) != 0, (mods & GLFW_MOD_ALT) != 0,
+                                               (mods & GLFW_MOD_SUPER) != 0);
 }

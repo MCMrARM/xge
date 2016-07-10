@@ -3,19 +3,23 @@
 #include <set>
 #include <memory>
 #include <xge/input/Mouse.h>
+#include <xge/input/Keyboard.h>
 #include <xge/input/PointerEventListener.h>
+#include <xge/input/KeyboardEventListener.h>
 
 namespace xge {
 
-    class Game : public PointerEventListener {
+    class Game : public PointerEventListener, public KeyboardEventListener {
 
     private:
         int w = 0, h = 0;
         Mouse mouse;
         std::set<std::shared_ptr<PointerEventListener>> pointerListeners;
+        Keyboard keyboard;
+        std::set<std::shared_ptr<KeyboardEventListener>> keyboardListeners;
 
     public:
-        Game() : mouse(*this) {
+        Game() : mouse(*this), keyboard(*this) {
             //
         }
 
@@ -30,15 +34,18 @@ namespace xge {
             this->w = w;
             this->h = h;
         }
-        inline int getWidth() {
+        inline int getWidth() const {
             return w;
         }
-        inline int getHeight() {
+        inline int getHeight() const {
             return h;
         }
 
         inline Mouse &getMouse() {
             return mouse;
+        }
+        inline Keyboard &getKeyboard() {
+            return keyboard;
         }
 
         inline void addPointerListener(std::shared_ptr<PointerEventListener> listener) {
@@ -51,9 +58,19 @@ namespace xge {
             pointerListeners.clear();
         }
 
+        inline void addKeyboardListener(std::shared_ptr<KeyboardEventListener> listener) {
+            keyboardListeners.insert(std::move(listener));
+        }
+        inline void removeKeyboardListener(std::shared_ptr<KeyboardEventListener> listener) {
+            keyboardListeners.erase(std::move(listener));
+        }
+        inline void removeAllKeyboardListeners() {
+            keyboardListeners.clear();
+        }
+
         /**
          * Those functions will broadcast the event to the listeners. If you override them, you should call the original
-         * function or Pointer Listeners will not work.
+         * function or listeners will not work.
          */
         virtual void onPointerPress(PointerPressEvent const &event) {
             for (auto const &p : pointerListeners)
@@ -66,6 +83,15 @@ namespace xge {
         virtual void onPointerMove(PointerMoveEvent const &event) {
             for (auto const &p : pointerListeners)
                 p->onPointerMove(event);
+        }
+
+        virtual void onKeyPress(KeyPressEvent const &event) {
+            for (auto const &k : keyboardListeners)
+                k->onKeyPress(event);
+        }
+        virtual void onKeyRelease(KeyReleaseEvent const &event) {
+            for (auto const &k : keyboardListeners)
+                k->onKeyRelease(event);
         }
 
     };
