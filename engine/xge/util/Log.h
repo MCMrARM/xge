@@ -7,7 +7,7 @@
     static void name(const char* tag, const char* text, ...) { \
         va_list args; \
         va_start(args, text); \
-        vlog(LogLevel::LOG_TRACE, tag, text, args); \
+        vlog(logLevel, tag, text, args); \
         va_end(args); \
     }
 #ifndef NDEBUG
