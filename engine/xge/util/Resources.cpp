@@ -1,8 +1,8 @@
 #include "Resources.h"
 
 #include <fstream>
-#include "Log.h"
-#include "FileInputStream.h"
+#include <xge/util/Log.h>
+#include <xge/util/FileInputStream.h>
 
 using namespace xge;
 

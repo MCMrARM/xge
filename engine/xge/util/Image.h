@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 #include <cstdlib>
-#include "Log.h"
+#include <xge/util/Log.h>
 
 namespace xge {
 

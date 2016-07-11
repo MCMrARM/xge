@@ -1,9 +1,9 @@
 #include "Texture.h"
 
 #include <xge/opengl.h>
+#include <xge/util/Log.h>
+#include <xge/util/Image.h>
 #include "GLError.h"
-#include "../util/Log.h"
-#include "../util/Image.h"
 
 using namespace xge;
 

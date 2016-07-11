@@ -1,8 +1,8 @@
 #include "Image.h"
 
 #include <png.h>
-#include "InputStream.h"
-#include "Resources.h"
+#include <xge/util/InputStream.h>
+#include <xge/util/Resources.h>
 
 using namespace xge;
 

@@ -1,7 +1,7 @@
 #include "GPUBuffer.h"
 
 #include <xge/opengl.h>
-#include "../util/Log.h"
+#include <xge/util/Log.h>
 
 using namespace xge;
 

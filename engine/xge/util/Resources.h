@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "InputStream.h"
+#include <xge/util/InputStream.h>
 
 namespace xge {
 

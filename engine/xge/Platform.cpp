@@ -1,7 +1,7 @@
 #include "Platform.h"
 
 #include "Game.h"
-#include "util/Log.h"
+#include <xge/util/Log.h>
 
 using namespace xge;
 
