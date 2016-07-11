@@ -6,6 +6,7 @@
 #include <xge/input/Keyboard.h>
 #include <xge/input/PointerEventListener.h>
 #include <xge/input/KeyboardEventListener.h>
+#include "util/GameTime.h"
 
 namespace xge {
 
@@ -17,6 +18,7 @@ namespace xge {
         std::set<std::shared_ptr<PointerEventListener>> pointerListeners;
         Keyboard keyboard;
         std::set<std::shared_ptr<KeyboardEventListener>> keyboardListeners;
+        GameTime time;
 
     public:
         Game() : mouse(*this), keyboard(*this) {
@@ -25,7 +27,12 @@ namespace xge {
 
         virtual void init() { }
 
-        virtual void draw() { }
+        virtual void draw() {
+            time.update();
+            draw(time);
+        }
+
+        virtual void draw(GameTime const &time) { }
 
         /**
          * This function will be called even before init and will initialize the window/screen size.
