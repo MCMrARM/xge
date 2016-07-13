@@ -51,3 +51,7 @@ Datagram DatagramSocket::receive() {
 void DatagramSocket::send(Datagram const &dg) {
     sendto(fd, dg.data, (size_t) dg.dataSize, 0, (sockaddr*) &dg.addr, sizeof(dg.addr));
 }
+
+void DatagramSocket::send(sockaddr_in addr, const char *data, size_t len) {
+    sendto(fd, data, len, 0, (sockaddr*) &addr, sizeof(addr));
+}

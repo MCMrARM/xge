@@ -30,6 +30,7 @@ namespace xge {
 
         Datagram receive();
         void send(Datagram const &dg);
+        void send(sockaddr_in addr, const char *data, size_t len);
 
         inline int getFileDescriptor() {
             return fd;
