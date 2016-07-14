@@ -10,18 +10,26 @@
 
 namespace xge {
 
+    class ConnectionHandler;
+
     class Connection {
 
     public:
         typedef std::function<void (int)> ACKCallback;
 
     protected:
-        DatagramSocket &socket;
+        friend class ConnectionHandler;
+
+        ConnectionHandler &handler;
         sockaddr_in addr;
         unsigned short mtu = 1500;
 
+        std::chrono::milliseconds reliableResendTime;
+        std::chrono::milliseconds reliablePacketIdReuseTime;
+
         struct PacketId {
-            int special : 3;
+            int special : 2;
+            int system : 1;
             int reliable : 1;
             int ordered : 1;
             int channelZero : 1;
@@ -84,8 +92,11 @@ namespace xge {
 
         void handlePacket(char *msg, size_t len);
 
+        void resendPackets();
+        void removeQueuedReceivedReliablePacketIndexes();
+
     public:
-        Connection(DatagramSocket &socket, sockaddr_in addr);
+        Connection(ConnectionHandler &handler, sockaddr_in addr);
 
         /**
          * This function will send an unreliable packet. The packet may arrive with a delay, before or after other

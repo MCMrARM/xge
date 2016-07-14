@@ -2,21 +2,26 @@
 
 #include <cstring>
 #include <climits>
+#include "ConnectionHandler.h"
 
 using namespace xge;
 
-Connection::Connection(DatagramSocket &socket, sockaddr_in addr) : socket(socket), addr(addr) {
+Connection::Connection(ConnectionHandler &handler, sockaddr_in addr) : handler(handler), addr(addr),
+                                                                       reliableResendTime(5000),
+                                                                       reliablePacketIdReuseTime(30000) {
     memset(sendOrderIndex, 0, sizeof(sendOrderIndex));
     memset(receivedOrderedPacketIndex, 0, sizeof(receivedOrderedPacketIndex));
 }
 
 void Connection::sendRaw(char *data, size_t len) {
-    socket.send(addr, data, len);
+    handler.getSocket().send(addr, data, len, false);
 }
 
 void Connection::sendAndQueueReliableRaw(std::vector<char> data, unsigned short reliableId) {
-    socket.send(addr, data.data(), data.size());
-    sendReliablePackets.push({std::chrono::steady_clock::now() /*+ reliableResendTime*/, std::move(data), reliableId});
+    using namespace std::chrono;
+    handler.getSocket().send(addr, data.data(), data.size(), false);
+    steady_clock::time_point tp = steady_clock::now() + reliableResendTime;
+    sendReliablePackets.push({tp, std::move(data), reliableId});
 }
 
 void Connection::send(PacketId pkId, char *msg, size_t len, unsigned char channel, const ACKCallback &ack,
@@ -113,6 +118,8 @@ unsigned short Connection::getNextOrderIndex(unsigned char channel) {
 }
 
 void Connection::handlePacket(char *msg, size_t len) {
+    using namespace std::chrono;
+
     PacketId pkId = *((PacketId *) msg);
     if (pkId.fragmented) {
         if (len < 10)
@@ -141,21 +148,27 @@ void Connection::handlePacket(char *msg, size_t len) {
             }
         }
     } else {
+        size_t headerSize = 1;
         if (pkId.reliable) {
             unsigned short reliableId = (unsigned short &) msg[1];
             if (receivedReliablePacketIndexes.count(reliableId) > 0)
                 return; // it was received already, ignore
+            // TODO: Send ACK
             receivedReliablePacketIndexes.insert(reliableId);
-            receivedReliablePacketIndexesRemoveQueue.push({std::chrono::steady_clock::now(), reliableId});
+            steady_clock::time_point tp = steady_clock::now() + reliablePacketIdReuseTime;
+            receivedReliablePacketIndexesRemoveQueue.push({tp, reliableId});
             if (pkId.ordered) {
+                headerSize = 5 + (pkId.channelZero ? 0 : 1);
                 unsigned short orderId = (unsigned short &) msg[3];
                 unsigned char channel = 0;
+                if (pkId.system)
+                    return; // ordered packets can't be system
                 if (!pkId.channelZero)
                     channel = (unsigned char) msg[5];
                 auto &channelOrderedPacketList = receivedOrderedPackets[channel];
                 if (orderId != receivedOrderedPacketIndex[channel]) {
-                    std::vector<char> data(len);
-                    memcpy(data.data(), msg, len);
+                    std::vector<char> data(len - headerSize);
+                    memcpy(data.data(), &msg[headerSize], len - headerSize);
                     channelOrderedPacketList[orderId] = std::move(data);
                     if (receivedOrderedPacketIndex[channel] >= USHRT_MAX)
                         receivedOrderedPacketIndex[channel] = 0;
@@ -166,7 +179,8 @@ void Connection::handlePacket(char *msg, size_t len) {
                 // checks for packets that have arrived later
                 for (auto it = channelOrderedPacketList.find(orderId); it != channelOrderedPacketList.end(); ) {
                     if (it->first == receivedOrderedPacketIndex[channel]) {
-                        // TODO: pass to user code
+                        handler.addUserPacket(*this, std::move(it->second));
+
                         it = channelOrderedPacketList.erase(it);
                         if (receivedOrderedPacketIndex[channel] >= USHRT_MAX) {
                             receivedOrderedPacketIndex[channel] = 0;
@@ -178,23 +192,54 @@ void Connection::handlePacket(char *msg, size_t len) {
                         it++;
                     }
                 }
+            } else {
+                headerSize = 3;
             }
+        } else if (pkId.ack) {
+            // TODO: Send ACK
         }
-        // TODO: pass to user code
+        if (pkId.system) {
+            // TODO: handle system msg
+        } else {
+            handler.addUserPacket(*this, &msg[headerSize], len - headerSize);
+        }
     }
 }
 
 int Connection::send(char *msg, size_t len, unsigned char channel, const ACKCallback &ackCallback) {
-    PacketId pkId = { 0, 1, 1, (channel == 0 ? 1 : 0), (ackCallback != nullptr ? 1 : 0), 0 };
+    PacketId pkId = { 0, 0, 1, 1, (channel == 0 ? 1 : 0), (ackCallback != nullptr ? 1 : 0), 0 };
     send(pkId, msg, len, channel, ackCallback, nullptr);
 }
 
 int Connection::sendUnordered(char *msg, size_t len, const ACKCallback &ackCallback) {
-    PacketId pkId = { 0, 1, 0, 0, (ackCallback != nullptr ? 1 : 0), 0 };
+    PacketId pkId = { 0, 0, 1, 0, 0, (ackCallback != nullptr ? 1 : 0), 0 };
     send(pkId, msg, len, 0, ackCallback, nullptr);
 }
 
 void Connection::sendUnreliable(char *msg, size_t len, const ACKCallback &ack, const ACKCallback &nack) {
-    PacketId pkId = { 0, 1, 0, 0, (ack != nullptr || nack != nullptr ? 1 : 0), 0 };
+    PacketId pkId = { 0, 0, 1, 0, 0, (ack != nullptr || nack != nullptr ? 1 : 0), 0 };
     send(pkId, msg, len, 0, ack, nack);
+}
+
+void Connection::resendPackets() {
+    auto t = std::chrono::steady_clock::now();
+    while (!sendReliablePackets.empty()) {
+        if (sendReliablePackets.top().time >= t) {
+            // resend
+            unsigned short i = sendReliablePackets.top().index;
+            std::vector<char> d = std::move(sendReliablePackets.top().data);
+            sendReliablePackets.pop();
+            sendAndQueueReliableRaw(std::move(d), i);
+        }
+    }
+}
+
+void Connection::removeQueuedReceivedReliablePacketIndexes() {
+    auto t = std::chrono::steady_clock::now();
+    while (!receivedReliablePacketIndexesRemoveQueue.empty()) {
+        if (receivedReliablePacketIndexesRemoveQueue.top().time >= t) {
+            receivedReliablePacketIndexes.erase(receivedReliablePacketIndexesRemoveQueue.top().index);
+            receivedReliablePacketIndexesRemoveQueue.pop();
+        }
+    }
 }

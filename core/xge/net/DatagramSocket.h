@@ -29,8 +29,9 @@ namespace xge {
         void close();
 
         Datagram receive();
-        void send(Datagram const &dg);
-        void send(sockaddr_in addr, const char *data, size_t len);
+        bool receive(Datagram &dg, bool canBlock = true);
+        bool send(Datagram const &dg, bool canBlock = true);
+        bool send(sockaddr_in addr, const char *data, size_t len, bool canBlock = true);
 
         inline int getFileDescriptor() {
             return fd;
