@@ -4,6 +4,8 @@
 #include <functional>
 #include <chrono>
 #include <queue>
+#include <set>
+#include <map>
 #include "DatagramSocket.h"
 
 namespace xge {
@@ -35,12 +37,39 @@ namespace xge {
                 return (time > pk.time);
             }
         };
+        struct ReliableReceiveRemove {
+            std::chrono::steady_clock::time_point time;
+            unsigned short index;
+
+            bool operator <(const ReliableReceiveRemove &pk) const {
+                return (time > pk.time);
+            }
+        };
+        struct FragmentedPacketData {
+            std::vector<char> data;
+            std::vector<bool> received;
+            unsigned int neededFragments;
+
+            void setSize(size_t size, unsigned int neededFragments) {
+                if (data.size() == size && received.size() == neededFragments)
+                    return;
+                data.resize(size);
+                received.resize(neededFragments, false);
+                this->neededFragments = neededFragments;
+            }
+        };
 
         unsigned short sendReliableIndex = 0;
         unsigned short sendFragmentPkIndex = 0;
         unsigned short sendOrderIndex[256];
         std::priority_queue<ReliableSendPacket> sendReliablePackets;
         std::vector<unsigned short> receivedSentReliablePacketIndexes;
+        std::map<int, FragmentedPacketData> fragmentedPackets;
+
+        std::set<unsigned short> receivedReliablePacketIndexes;
+        std::priority_queue<ReliableReceiveRemove> receivedReliablePacketIndexesRemoveQueue;
+        std::map<int, std::vector<char>> receivedOrderedPackets[256];
+        unsigned short receivedOrderedPacketIndex[256];
 
         unsigned short getNextReliableIndex();
         unsigned short getNextFragmentPacketIndex();
@@ -52,6 +81,8 @@ namespace xge {
 
         void sendRaw(char *data, size_t len);
         void sendAndQueueReliableRaw(std::vector<char> data, unsigned short reliableId);
+
+        void handlePacket(char *msg, size_t len);
 
     public:
         Connection(DatagramSocket &socket, sockaddr_in addr);
