@@ -9,6 +9,7 @@
 #include <thread>
 #include <atomic>
 #include <cstring>
+#include <mutex>
 #include <netinet/in.h>
 #include "DatagramSocket.h"
 #include "NetAddress.h"
@@ -37,17 +38,25 @@ namespace xge {
     class ConnectionHandler {
 
     public:
+        typedef std::function<bool (NetAddress const &)> IncomingConnectionCallback;
+        typedef std::function<void (Connection &)> ConnectedCallback;
         typedef std::function<void (Connection &, char *, size_t)> PacketReceiveCallback;
 
     protected:
         friend class Connection;
 
         DatagramSocket &socket;
+        std::mutex mutex;
+        IncomingConnectionCallback connectCallback = nullptr;
+        ConnectedCallback connectedCallback = nullptr;
         PacketReceiveCallback receiveCallback = nullptr;
         std::deque<PacketData> packets;
         std::unordered_map<NetAddress, std::shared_ptr<Connection>> connections;
         std::thread thread;
         std::atomic<bool> shouldStopThread;
+        const bool acceptConnections;
+
+        void onConnected(Connection &connection);
 
         void addUserPacket(Connection &connection, char *data, size_t len);
         void addUserPacket(Connection &connection, std::vector<char> data);
@@ -61,7 +70,8 @@ namespace xge {
          * to update connections (handle incoming packets, timeouts, etc). When it's set to false (default and
          * recommended) it'll start an additional thread handling those stuff.
          */
-        ConnectionHandler(DatagramSocket &socket, bool manual = false) : socket(socket), shouldStopThread(false) {
+        ConnectionHandler(DatagramSocket &socket, bool acceptConnections, bool manual = false) :
+                socket(socket), acceptConnections(acceptConnections), shouldStopThread(false) {
             if (!manual)
                 thread = std::thread(&ConnectionHandler::loopThread, this);
         }
@@ -86,7 +96,22 @@ namespace xge {
          * Keep in mind this callback will be called from an update thread unless a manual mode is used.
          */
         void setPacketReceiveCallback(const PacketReceiveCallback &callback = nullptr) {
+            std::lock_guard<std::mutex> lock (mutex);
             receiveCallback = callback;
+        }
+
+        /**
+         * This function sets a incoming connection callback. It is called every time someone tries to connect from the
+         * specified network address. The connection may not be fully estabilished even if you allow it.
+         */
+        void setIncomingConnectionCallback(const IncomingConnectionCallback &callback = nullptr) {
+            std::lock_guard<std::mutex> lock (mutex);
+            connectCallback = callback;
+        }
+
+        void setConnectedCallback(const ConnectedCallback &callback = nullptr) {
+            std::lock_guard<std::mutex> lock (mutex);
+            connectedCallback = callback;
         }
 
         /**
@@ -94,6 +119,7 @@ namespace xge {
          * a packet receive callback is specified.
          */
         bool receive(PacketData &data) {
+            std::lock_guard<std::mutex> lock (mutex);
             if (packets.size() > 0) {
                 data = std::move(packets.front());
                 packets.pop_front();

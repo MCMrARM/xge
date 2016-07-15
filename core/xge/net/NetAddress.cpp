@@ -17,5 +17,5 @@ NetAddress::NetAddress(std::string ip, unsigned short port) {
 }
 
 bool NetAddress::operator==(const NetAddress &a) const {
-    return memcmp(&addr, &a.addr, sizeof(a.addr));
+    return memcmp(&addr, &a.addr, sizeof(a.addr)) == 0;
 }

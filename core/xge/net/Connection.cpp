@@ -3,15 +3,22 @@
 #include <cstring>
 #include <climits>
 #include <arpa/inet.h>
+#include <xge/util/Log.h>
 #include "ConnectionHandler.h"
 
 using namespace xge;
 
-Connection::Connection(ConnectionHandler &handler, const NetAddress &addr) : handler(handler), addr(addr.addr),
-                                                                             reliableResendTime(5000),
-                                                                             reliablePacketIdReuseTime(30000) {
+char Connection::magicValue[8] = { 'x', 'g', 'e', '.', 'C', 'o', 'n', 'n' };
+int Connection::mtuValues[] = { 1500, 1492, 1400, 576 };
+
+Connection::Connection(ConnectionHandler &handler, const NetAddress &addr, bool isServerConnection) :
+        handler(handler), addr(addr.addr), isServerConnection(isServerConnection), reliableResendTime(300),
+        reliablePacketIdReuseTime(30000), mtuAttemptDelayTime(500), hasAcceptedHandshake(false), hasNegotiatedMTU(false) {
     memset(sendOrderIndex, 0, sizeof(sendOrderIndex));
     memset(receivedOrderedPacketIndex, 0, sizeof(receivedOrderedPacketIndex));
+
+    if (!isServerConnection)
+        sendHandshakeStart();
 }
 
 void Connection::sendRaw(char *data, size_t len) {
@@ -21,6 +28,8 @@ void Connection::sendRaw(char *data, size_t len) {
 void Connection::sendAndQueueReliableRaw(std::vector<char> data, unsigned short reliableId) {
     using namespace std::chrono;
     handler.getSocket().send(addr, data.data(), data.size(), false);
+
+    std::lock_guard<std::recursive_mutex> lock (sendReliablePacketsMutex);
     steady_clock::time_point tp = steady_clock::now() + reliableResendTime;
     sendReliablePackets.push({tp, std::move(data), reliableId});
 }
@@ -157,7 +166,9 @@ void Connection::handlePacket(char *msg, size_t len) {
             // TODO: Send ACK
             receivedReliablePacketIndexes.insert(reliableId);
             steady_clock::time_point tp = steady_clock::now() + reliablePacketIdReuseTime;
+            receivedReliablePacketRemoveQueueMutex.lock();
             receivedReliablePacketIndexesRemoveQueue.push({tp, reliableId});
+            receivedReliablePacketRemoveQueueMutex.unlock();
             if (pkId.ordered) {
                 headerSize = 5 + (pkId.channelZero ? 0 : 1);
                 unsigned short orderId = (unsigned short &) msg[3];
@@ -200,47 +211,159 @@ void Connection::handlePacket(char *msg, size_t len) {
             // TODO: Send ACK
         }
         if (pkId.system) {
-            // TODO: handle system msg
+            handleSystemMessage(&msg[headerSize], len - headerSize);
         } else {
             handler.addUserPacket(*this, &msg[headerSize], len - headerSize);
         }
     }
 }
 
+void Connection::handleSystemMessage(char *msg, size_t len) {
+    if (len < 1)
+        return;
+    if (msg[0] == 0x01) {
+        if (len < 9 || !isServerConnection)
+            return;
+        if (memcmp(&msg[1], magicValue, 8) == 0) {
+            hasAcceptedHandshake = true;
+            sendHandshakeAccepted();
+        }
+    } else if (msg[0] == 0x02) {
+        if (len < 9 || isServerConnection)
+            return;
+        if (memcmp(&msg[1], magicValue, 8) == 0)
+            hasAcceptedHandshake = true; // we will continue in update()
+    } else if (msg[0] == 0x03) {
+        if (len < 3 || !isServerConnection || hasNegotiatedMTU)
+            return;
+        unsigned short pkMtu = ((unsigned short &) msg[1]);
+        if (pkMtu < 100 || pkMtu >= 3000)
+            return;
+        if (len >= pkMtu - 1) {
+            mtu = pkMtu;
+            hasNegotiatedMTU = true;
+            sendMTUAccepted(mtu);
+
+            handler.onConnected(*this);
+        }
+    } else if (msg[0] == 0x04) {
+        if (len < 3 || isServerConnection || hasNegotiatedMTU)
+            return;
+        unsigned short pkMtu = ((unsigned short &) msg[1]);
+        mtu = pkMtu;
+        hasNegotiatedMTU = true;
+
+        handler.onConnected(*this);
+    } else {
+        Log::trace("Connection", "Unknown System Packet ID: %i", msg[0]);
+    }
+}
+
 int Connection::send(char *msg, size_t len, unsigned char channel, const ACKCallback &ackCallback) {
+    XGEAssert(hasNegotiatedMTU);
     PacketId pkId = { 0, 0, 1, 1, (channel == 0 ? 1 : 0), (ackCallback != nullptr ? 1 : 0), 0 };
     send(pkId, msg, len, channel, ackCallback, nullptr);
 }
 
 int Connection::sendUnordered(char *msg, size_t len, const ACKCallback &ackCallback) {
+    XGEAssert(hasNegotiatedMTU);
     PacketId pkId = { 0, 0, 1, 0, 0, (ackCallback != nullptr ? 1 : 0), 0 };
     send(pkId, msg, len, 0, ackCallback, nullptr);
 }
 
 void Connection::sendUnreliable(char *msg, size_t len, const ACKCallback &ack, const ACKCallback &nack) {
+    XGEAssert(hasNegotiatedMTU);
     PacketId pkId = { 0, 0, 1, 0, 0, (ack != nullptr || nack != nullptr ? 1 : 0), 0 };
     send(pkId, msg, len, 0, ack, nack);
 }
 
-void Connection::resendPackets() {
-    auto t = std::chrono::steady_clock::now();
-    while (!sendReliablePackets.empty()) {
-        if (sendReliablePackets.top().time >= t) {
-            // resend
-            unsigned short i = sendReliablePackets.top().index;
-            std::vector<char> d = std::move(sendReliablePackets.top().data);
-            sendReliablePackets.pop();
-            sendAndQueueReliableRaw(std::move(d), i);
-        }
-    }
+void Connection::sendHandshakeStart() {
+    char msg[9];
+    msg[0] = 0x01; // handshake start
+    memcpy(&msg[1], magicValue, 8);
+
+    // reliable system message
+    PacketId pkId = { 0, 1, 1, 0, 0, 0, 0 };
+    send(pkId, msg, sizeof(msg), 0, nullptr, nullptr);
 }
 
-void Connection::removeQueuedReceivedReliablePacketIndexes() {
+void Connection::sendHandshakeAccepted() {
+    char msg[9];
+    msg[0] = 0x02; // handshake accepted
+    memcpy(&msg[1], magicValue, 8);
+
+    // reliable system message
+    PacketId pkId = { 0, 1, 1, 0, 0, 0, 0 };
+    send(pkId, msg, sizeof(msg), 0, nullptr, nullptr);
+}
+
+void Connection::sendMTUTest(unsigned short mtu) {
+    // unreliable system message
+    PacketId pkId = { 0, 1, 0, 0, 0, 0, 0 };
+
+    XGEAssert(mtu > 4);
+    char msg[mtu];
+    msg[0] = *((char *) &pkId);
+    msg[1] = 0x03; // mtu test
+    ((unsigned short &) msg[2]) = mtu;
+    memset(&msg[4], 0, (size_t) (mtu - 4));
+
+    sendRaw(msg, sizeof(msg)); // send raw, so it won't get fragmented in any way
+}
+
+void Connection::sendMTUAccepted(unsigned short mtu) {
+    char msg[3];
+    msg[0] = 0x04; // mtu accepted
+    ((unsigned short &) msg[1]) = mtu;
+
+    // reliable system message
+    PacketId pkId = { 0, 1, 1, 0, 0, 0, 0 };
+    send(pkId, msg, sizeof(msg), 0, nullptr, nullptr);
+}
+
+void Connection::update() {
+    if (dead)
+        return;
     auto t = std::chrono::steady_clock::now();
-    while (!receivedReliablePacketIndexesRemoveQueue.empty()) {
-        if (receivedReliablePacketIndexesRemoveQueue.top().time >= t) {
-            receivedReliablePacketIndexes.erase(receivedReliablePacketIndexesRemoveQueue.top().index);
-            receivedReliablePacketIndexesRemoveQueue.pop();
+    if (!isServerConnection && !hasNegotiatedMTU && hasAcceptedHandshake) {
+        if (mtuSendAttempt == -1 || (t - lastMtuSendTime) > mtuAttemptDelayTime) {
+            mtuSendAttempt++;
+            int valNum = mtuSendAttempt / mtuAttemptsPerValue;
+            if (valNum >= mtuValuesCount) {
+                // this connection is dead
+                dead = true;
+                return;
+            }
+            sendMTUTest((unsigned short) mtuValues[valNum]);
+            lastMtuSendTime = t;
         }
     }
+
+    sendReliablePacketsMutex.lock();
+    while (!sendReliablePackets.empty()) {
+        if (sendReliablePackets.top().time > t)
+            break;
+
+        // resend
+        unsigned short i = sendReliablePackets.top().index;
+        if (receivedSentReliablePacketIndexes.count(i) > 0) {
+            receivedSentReliablePacketIndexes.erase(i);
+            sendReliablePackets.pop();
+            continue;
+        }
+        std::vector<char> d = std::move(sendReliablePackets.top().data);
+        sendReliablePackets.pop();
+        sendAndQueueReliableRaw(std::move(d), i);
+    }
+    sendReliablePacketsMutex.unlock();
+
+
+    receivedReliablePacketRemoveQueueMutex.lock();
+    while (!receivedReliablePacketIndexesRemoveQueue.empty()) {
+        if (receivedReliablePacketIndexesRemoveQueue.top().time > t)
+            break;
+        receivedReliablePacketIndexes.erase(receivedReliablePacketIndexesRemoveQueue.top().index);
+        receivedReliablePacketIndexesRemoveQueue.pop();
+    }
+    receivedReliablePacketRemoveQueueMutex.unlock();
 }

@@ -6,7 +6,15 @@
 
 using namespace xge;
 
+void ConnectionHandler::onConnected(Connection &connection) {
+    // no need to lock mutex - this will always be called from a context that has locked the mutex already
+    if (connectedCallback != nullptr) {
+        connectedCallback(connection);
+    }
+}
+
 void ConnectionHandler::addUserPacket(Connection &connection, char *data, size_t len) {
+    // no need to lock mutex
     if (receiveCallback != nullptr) {
         receiveCallback(connection, data, len);
         return;
@@ -17,6 +25,7 @@ void ConnectionHandler::addUserPacket(Connection &connection, char *data, size_t
 }
 
 void ConnectionHandler::addUserPacket(Connection &connection, std::vector<char> data) {
+    // no need to lock mutex
     if (receiveCallback != nullptr) {
         receiveCallback(connection, data.data(), data.size());
         return;
@@ -25,10 +34,11 @@ void ConnectionHandler::addUserPacket(Connection &connection, std::vector<char> 
 }
 
 std::shared_ptr<Connection> ConnectionHandler::open(NetAddress addr) {
+    std::lock_guard<std::mutex> lock (mutex);
     if (connections.count(addr) > 0)
         return connections.at(addr);
     std::shared_ptr<Connection> connection (new Connection(*this, addr));
-    connections.insert({ addr, std::unique_ptr<Connection>(new Connection(*this, addr)) });
+    connections.insert({ addr, connection });
     return connection;
 }
 
@@ -40,13 +50,25 @@ void ConnectionHandler::loopThread() {
 }
 
 void ConnectionHandler::update() {
+    std::lock_guard<std::mutex> lock (mutex);
+
     Datagram dg;
     while (socket.receive(dg, false)) {
-        open(dg.addr)->handlePacket(dg.data, (size_t) dg.dataSize);
+        if (connections.count(dg.addr) > 0)
+            connections.at(dg.addr)->handlePacket(dg.data, (size_t) dg.dataSize);
+        else {
+            if (!acceptConnections || (connectCallback != nullptr && !connectCallback(dg.addr)))
+                continue;
+            std::shared_ptr<Connection> connection (new Connection(*this, dg.addr, true));
+            connections.insert({ dg.addr, connection });
+            connection->handlePacket(dg.data, (size_t) dg.dataSize);
+        }
     }
-    for (auto &it : connections) {
-        it.second->resendPackets();
-        it.second->removeQueuedReceivedReliablePacketIndexes();
-        // TODO: handle disconnects
+    for (auto it = connections.begin(); it != connections.end(); ) {
+        it->second->update();
+        if (it->second->isDead())
+            it = connections.erase(it);
+        else
+            it++;
     }
 }

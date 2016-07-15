@@ -41,14 +41,14 @@ Datagram DatagramSocket::receive() {
 
 bool DatagramSocket::receive(Datagram &dg, bool canBlock) {
     socklen_t clientAddrLen = sizeof(dg.addr);
-    dg.dataSize = (ssize_t) recvfrom(fd, dg.data, sizeof(dg.data), (canBlock ? MSG_DONTWAIT : 0), (sockaddr*) &dg.addr, &clientAddrLen);
+    dg.dataSize = (ssize_t) recvfrom(fd, dg.data, sizeof(dg.data), (canBlock ? 0 : MSG_DONTWAIT), (sockaddr*) &dg.addr, &clientAddrLen);
     return dg;
 }
 
 bool DatagramSocket::send(Datagram const &dg, bool canBlock) {
-    sendto(fd, dg.data, (size_t) dg.dataSize, (canBlock ? MSG_DONTWAIT : 0), (sockaddr*) &dg.addr, sizeof(dg.addr));
+    sendto(fd, dg.data, (size_t) dg.dataSize, (canBlock ? 0 : MSG_DONTWAIT), (sockaddr*) &dg.addr, sizeof(dg.addr));
 }
 
 bool DatagramSocket::send(sockaddr_in addr, const char *data, size_t len, bool canBlock) {
-    sendto(fd, data, len, (canBlock ? MSG_DONTWAIT : 0), (sockaddr*) &addr, sizeof(addr));
+    sendto(fd, data, len, (canBlock ? 0 : MSG_DONTWAIT), (sockaddr*) &addr, sizeof(addr));
 }

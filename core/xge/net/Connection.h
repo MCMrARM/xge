@@ -6,6 +6,8 @@
 #include <queue>
 #include <set>
 #include <map>
+#include <mutex>
+#include <atomic>
 #include "DatagramSocket.h"
 #include "NetAddress.h"
 
@@ -16,6 +18,10 @@ namespace xge {
     class Connection {
 
     public:
+        static char magicValue[8];
+        static const int mtuValuesCount = 4;
+        static int mtuValues[mtuValuesCount];
+
         typedef std::function<void (int)> ACKCallback;
 
     protected:
@@ -24,11 +30,19 @@ namespace xge {
         ConnectionHandler &handler;
         sockaddr_in addr;
         unsigned short mtu = 1500;
+        const bool isServerConnection;
+        int mtuSendAttempt = -1;
+        std::chrono::steady_clock::time_point lastMtuSendTime;
+        std::atomic<bool> hasAcceptedHandshake;
+        std::atomic<bool> hasNegotiatedMTU;
+        bool dead = false; // if this connection has timeouted
 
+        std::chrono::milliseconds mtuAttemptDelayTime;
+        int mtuAttemptsPerValue = 3;
         std::chrono::milliseconds reliableResendTime;
         std::chrono::milliseconds reliablePacketIdReuseTime;
 
-        struct PacketId {
+        struct __attribute__((__packed__)) PacketId {
             int special : 2;
             int system : 1;
             int reliable : 1;
@@ -37,6 +51,7 @@ namespace xge {
             int ack : 1;
             int fragmented : 1;
         };
+        static_assert(sizeof(PacketId) == 1, "PacketId is not byte-sized");
         struct ReliableSendPacket {
             std::chrono::steady_clock::time_point time;
             std::vector<char> data;
@@ -71,10 +86,13 @@ namespace xge {
         unsigned short sendReliableIndex = 0;
         unsigned short sendFragmentPkIndex = 0;
         unsigned short sendOrderIndex[256];
+
+        std::recursive_mutex sendReliablePacketsMutex;
         std::priority_queue<ReliableSendPacket> sendReliablePackets;
-        std::vector<unsigned short> receivedSentReliablePacketIndexes;
+        std::set<unsigned short> receivedSentReliablePacketIndexes;
         std::map<int, FragmentedPacketData> fragmentedPackets;
 
+        std::mutex receivedReliablePacketRemoveQueueMutex;
         std::set<unsigned short> receivedReliablePacketIndexes;
         std::priority_queue<ReliableReceiveRemove> receivedReliablePacketIndexesRemoveQueue;
         std::map<int, std::vector<char>> receivedOrderedPackets[256];
@@ -93,11 +111,38 @@ namespace xge {
 
         void handlePacket(char *msg, size_t len);
 
-        void resendPackets();
-        void removeQueuedReceivedReliablePacketIndexes();
+        void handleSystemMessage(char *msg, size_t len);
+
+        void update();
+
+        void sendHandshakeStart();
+        void sendHandshakeAccepted();
+        void sendMTUTest(unsigned short mtu);
+        void sendMTUAccepted(unsigned short mtu);
 
     public:
-        Connection(ConnectionHandler &handler, const NetAddress &addr);
+        /**
+         * This function creates a new Connection. It is preffered to create a new Connection using
+         * ConnectionManager::open.
+         */
+        Connection(ConnectionHandler &handler, const NetAddress &addr, bool isServerConnection = false);
+
+        /**
+         * This function checks if this connection is dead (eg. when a timeout happens, or we failed to connect to the
+         * specified address).
+         */
+        inline bool isDead() {
+            return dead;
+        }
+
+        /**
+         * This function returns the MTU (Maximum Transmission Unit - the maximal size of a single packet).
+         * All packets over this size will be split by this library automatically. You shouldn't really use this value
+         * in your code.
+         */
+        inline unsigned short getMTU() {
+            return mtu;
+        }
 
         /**
          * This function will send an unreliable packet. The packet may arrive with a delay, before or after other
@@ -121,8 +166,7 @@ namespace xge {
         }
 
         /**
-         * This function sends a reliable, ordered packet. An ACK callback is optional, and if specified will cause some
-         * more network traffic.
+         * This function sends a reliable, ordered packet.
          * As this packet is reliable, there's no NACK callback as the only way to have the packet
          * not delivered at all is a disconnect.
          * The packets on a single channel will always be received in the send order in your code. Every channel has
