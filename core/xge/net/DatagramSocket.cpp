@@ -8,7 +8,7 @@
 
 using namespace xge;
 
-DatagramSocket::DatagramSocket(std::string ip, unsigned short port) {
+DatagramSocket::DatagramSocket(NetAddress addr) {
     fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (fd < 0) {
         Log::error("ServerSocket", "Unable to open socket");
@@ -18,16 +18,7 @@ DatagramSocket::DatagramSocket(std::string ip, unsigned short port) {
         int opt = 1;
         setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int));
     }
-    sockaddr_in addr;
-    memset((void*) &addr, 0, sizeof(addr));
-    if (ip.size() > 0) {
-        addr.sin_addr.s_addr = inet_addr(ip.c_str());
-    } else {
-        addr.sin_addr.s_addr = INADDR_ANY;
-    }
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
-    if (bind(fd, (sockaddr *) &addr, sizeof(addr)) < 0) {
+    if (bind(fd, (sockaddr *) &addr.addr, sizeof(addr.addr)) < 0) {
         Log::error("DatagramSocket", "Failed to bind socket");
         ::close(fd);
         fd = -1;

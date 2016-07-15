@@ -24,6 +24,14 @@ void ConnectionHandler::addUserPacket(Connection &connection, std::vector<char> 
     packets.push_back({ &connection, std::move(data) });
 }
 
+std::shared_ptr<Connection> ConnectionHandler::open(NetAddress addr) {
+    if (connections.count(addr) > 0)
+        return connections.at(addr);
+    std::shared_ptr<Connection> connection (new Connection(*this, addr));
+    connections.insert({ addr, std::unique_ptr<Connection>(new Connection(*this, addr)) });
+    return connection;
+}
+
 void ConnectionHandler::loopThread() {
     while (!shouldStopThread) {
         update();
@@ -34,9 +42,7 @@ void ConnectionHandler::loopThread() {
 void ConnectionHandler::update() {
     Datagram dg;
     while (socket.receive(dg, false)) {
-        if (connections.count(dg.addr) > 0)
-            connections[dg.addr] = std::unique_ptr<Connection>(new Connection(*this, dg.addr));
-        connections.at(dg.addr)->handlePacket(dg.data, (size_t) dg.dataSize);
+        open(dg.addr)->handlePacket(dg.data, (size_t) dg.dataSize);
     }
     for (auto &it : connections) {
         it.second->resendPackets();

@@ -2,6 +2,7 @@
 
 #include <string>
 #include <netinet/in.h>
+#include "NetAddress.h"
 
 namespace xge {
 
@@ -24,7 +25,7 @@ namespace xge {
         /**
          * Constructs a datagram socket. Supports only IPv4 addressing right now.
          */
-        DatagramSocket(std::string ip, unsigned short port);
+        DatagramSocket(NetAddress addr);
 
         void close();
 

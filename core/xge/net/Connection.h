@@ -7,6 +7,7 @@
 #include <set>
 #include <map>
 #include "DatagramSocket.h"
+#include "NetAddress.h"
 
 namespace xge {
 
@@ -96,7 +97,7 @@ namespace xge {
         void removeQueuedReceivedReliablePacketIndexes();
 
     public:
-        Connection(ConnectionHandler &handler, sockaddr_in addr);
+        Connection(ConnectionHandler &handler, const NetAddress &addr);
 
         /**
          * This function will send an unreliable packet. The packet may arrive with a delay, before or after other

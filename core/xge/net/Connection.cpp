@@ -2,13 +2,14 @@
 
 #include <cstring>
 #include <climits>
+#include <arpa/inet.h>
 #include "ConnectionHandler.h"
 
 using namespace xge;
 
-Connection::Connection(ConnectionHandler &handler, sockaddr_in addr) : handler(handler), addr(addr),
-                                                                       reliableResendTime(5000),
-                                                                       reliablePacketIdReuseTime(30000) {
+Connection::Connection(ConnectionHandler &handler, const NetAddress &addr) : handler(handler), addr(addr.addr),
+                                                                             reliableResendTime(5000),
+                                                                             reliablePacketIdReuseTime(30000) {
     memset(sendOrderIndex, 0, sizeof(sendOrderIndex));
     memset(receivedOrderedPacketIndex, 0, sizeof(receivedOrderedPacketIndex));
 }
@@ -82,7 +83,7 @@ void Connection::send(PacketId pkId, char *msg, size_t len, unsigned char channe
     } else {
         std::vector<char> pk (len + headerSize);
         memcpy(&pk[0], header, headerSize);
-        memcmp(&pk[headerSize], msg, len);
+        memcpy(&pk[headerSize], msg, len);
         if (pkId.reliable)
             sendAndQueueReliableRaw(std::move(pk), reliableId);
         else

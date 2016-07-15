@@ -11,6 +11,7 @@
 #include <cstring>
 #include <netinet/in.h>
 #include "DatagramSocket.h"
+#include "NetAddress.h"
 
 namespace xge {
 
@@ -41,21 +42,10 @@ namespace xge {
     protected:
         friend class Connection;
 
-        struct SockaddrHash {
-            size_t operator()(const sockaddr_in &addr) const {
-                return std::_Hash_impl::hash(&addr, sizeof(addr));
-            }
-        };
-        struct SockaddrComparator {
-            constexpr bool operator()(const sockaddr_in &addr1, const sockaddr_in &addr2) const {
-                return memcmp(&addr1, &addr2, sizeof(sockaddr_in)) == 0;
-            }
-        };
-
         DatagramSocket &socket;
         PacketReceiveCallback receiveCallback = nullptr;
         std::deque<PacketData> packets;
-        std::unordered_map<sockaddr_in, std::unique_ptr<Connection>, SockaddrHash, SockaddrComparator> connections;
+        std::unordered_map<NetAddress, std::shared_ptr<Connection>> connections;
         std::thread thread;
         std::atomic<bool> shouldStopThread;
 
@@ -87,6 +77,8 @@ namespace xge {
             return socket;
         }
 
+        std::shared_ptr<Connection> open(NetAddress addr);
+
         /**
          * This function allows you to set a packet receive callback. This callback will be called when a packet has
          * been received and ready to be passed to your code. If this callback is set, packet queue (the .receive()
@@ -101,13 +93,23 @@ namespace xge {
          * This function returns a packet from the internal receive queue. This function won't return any packets if
          * a packet receive callback is specified.
          */
-        PacketData receive() {
+        bool receive(PacketData &data) {
             if (packets.size() > 0) {
-                PacketData ret = std::move(packets.front());
+                data = std::move(packets.front());
                 packets.pop_front();
-                return std::move(ret);
+                return true;
             }
-            return PacketData();
+            return false;
+        }
+
+        /**
+         * This function returns a packet from the internal receive queue. This function won't return any packets if
+         * a packet receive callback is specified.
+         */
+        inline PacketData receive() {
+            PacketData ret;
+            receive(ret);
+            return ret;
         }
 
         /**
