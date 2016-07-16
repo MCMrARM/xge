@@ -41,6 +41,7 @@ namespace xge {
         int mtuAttemptsPerValue = 3;
         std::chrono::milliseconds reliableResendTime;
         std::chrono::milliseconds reliablePacketIdReuseTime;
+        std::chrono::milliseconds ackSendTime;
 
         struct __attribute__((__packed__)) PacketId {
             int special : 2;
@@ -86,10 +87,11 @@ namespace xge {
         unsigned short sendReliableIndex = 0;
         unsigned short sendFragmentPkIndex = 0;
         unsigned short sendOrderIndex[256];
+        unsigned short sendACKIndex = 0;
 
         std::recursive_mutex sendReliablePacketsMutex;
         std::priority_queue<ReliableSendPacket> sendReliablePackets;
-        std::set<unsigned short> receivedSentReliablePacketIndexes;
+        std::set<unsigned short> sendReliablePacketsIndexesToReceive;
         std::map<int, FragmentedPacketData> fragmentedPackets;
 
         std::mutex receivedReliablePacketRemoveQueueMutex;
@@ -97,6 +99,14 @@ namespace xge {
         std::priority_queue<ReliableReceiveRemove> receivedReliablePacketIndexesRemoveQueue;
         std::map<int, std::vector<char>> receivedOrderedPackets[256];
         unsigned short receivedOrderedPacketIndex[256];
+
+        std::mutex ackMutex;
+        std::chrono::steady_clock::time_point lastReliableAckSend;
+        std::chrono::steady_clock::time_point lastUnreliableAckSend;
+        std::set<unsigned short> ackReliableIds; // group those ack ids together to send in update later
+        std::set<unsigned short> ackUnreliableIds;
+        std::map<unsigned short, std::vector<std::pair<unsigned short, unsigned short>>> sentAckReliablePackets;
+        std::map<unsigned short, std::vector<std::pair<unsigned short, unsigned short>>> sentAckUnreliablePackets;
 
         unsigned short getNextReliableIndex();
         unsigned short getNextFragmentPacketIndex();
@@ -119,6 +129,9 @@ namespace xge {
         void sendHandshakeAccepted();
         void sendMTUTest(unsigned short mtu);
         void sendMTUAccepted(unsigned short mtu);
+        void sendAACK(unsigned short ackId, bool isReliable); // Acknowledged ACK
+
+        void buildAndSendACKList(const std::set<unsigned short> &list, bool isReliable);
 
     public:
         /**
