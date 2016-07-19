@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include "InputStream.h"
 #include "Endianness.h"
 
@@ -32,6 +33,14 @@ namespace xge {
         DataInputStream &operator >>(T &val) {
             read((char *) &val, sizeof(T));
             EndiannessUtil::swapEndianTo(val, endianness);
+            return *this;
+        }
+
+        DataInputStream &operator >>(std::string &val) {
+            short len;
+            *this >> len;
+            val.resize((size_t) len);
+            read(&val[0], (size_t) len);
             return *this;
         }
 

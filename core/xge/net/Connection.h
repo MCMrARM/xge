@@ -140,6 +140,10 @@ namespace xge {
          */
         Connection(ConnectionHandler &handler, const NetAddress &addr, bool isServerConnection = false);
 
+        void close() {
+            this->dead = true;
+        }
+
         /**
          * This function checks if this connection is dead (eg. when a timeout happens, or we failed to connect to the
          * specified address).

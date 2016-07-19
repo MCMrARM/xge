@@ -192,12 +192,12 @@ void Connection::handlePacket(char *msg, size_t len) {
                     std::vector<char> data(len - headerSize);
                     memcpy(data.data(), &msg[headerSize], len - headerSize);
                     channelOrderedPacketList[orderId] = std::move(data);
-                    if (receivedOrderedPacketIndex[channel] >= USHRT_MAX)
-                        receivedOrderedPacketIndex[channel] = 0;
-                    else
-                        receivedOrderedPacketIndex[channel]++;
                     return;
                 }
+                if (receivedOrderedPacketIndex[channel] >= USHRT_MAX)
+                    receivedOrderedPacketIndex[channel] = 0;
+                else
+                    receivedOrderedPacketIndex[channel]++;
                 // checks for packets that have arrived later
                 for (auto it = channelOrderedPacketList.find(orderId); it != channelOrderedPacketList.end(); ) {
                     if (it->first == receivedOrderedPacketIndex[channel]) {

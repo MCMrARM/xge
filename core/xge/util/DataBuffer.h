@@ -28,6 +28,14 @@ namespace xge {
             this->size = size;
         }
 
+        inline char *getBuffer() {
+            return data;
+        }
+
+        inline size_t getSize() const {
+            return size;
+        }
+
         /**
          * This function reads a primitive type from the buffer. Trying to read non-primitive types can lead to errors.
          */
