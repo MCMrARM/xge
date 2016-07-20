@@ -42,7 +42,7 @@ namespace xge {
         template <typename T>
         inline T get(size_t off, Endianness endianness = Endianness::LITTLE) {
 #ifndef NDEBUG
-            if (off < 0 || off + sizeof(T) >= size) {
+            if (off < 0 || off + sizeof(T) > size) {
                 Log::error("DataBuffer", "Trying to read outside DataBuffer boundaries.");
                 return T();
             }
@@ -58,7 +58,7 @@ namespace xge {
         template <typename T>
         inline void set(size_t off, T val, Endianness endianness = Endianness::LITTLE) {
 #ifndef NDEBUG
-            if (off < 0 || off + sizeof(T) >= size) {
+            if (off < 0 || off + sizeof(T) > size) {
                 Log::error("DataBuffer", "Trying to write outside DataBuffer boundaries.");
                 return;
             }
