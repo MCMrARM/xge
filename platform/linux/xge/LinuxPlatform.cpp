@@ -31,6 +31,7 @@ void LinuxPlatform::startGame(Game &game) {
         return;
     }
     glfwWindowHint(GLFW_SAMPLES, 4);
+    glfwSwapInterval(1);
     window = glfwCreateWindow(640, 480, "Game", NULL, NULL);
     game.setSize(640, 480);
     if (!window) {
