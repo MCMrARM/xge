@@ -6,6 +6,27 @@
 
 using namespace xge;
 
+unsigned int xge::GetBytesPerPixel(ImageFormat format) {
+    switch (format) {
+        case ImageFormat::GRAY:
+            return 1;
+        case ImageFormat::RGB:
+            return 3;
+        case ImageFormat::RGBA:
+            return 4;
+    }
+}
+
+void Image::copyTo(Image &img, int x, int y) {
+    XGEAssert(img.format == format);
+    XGEAssert(x + w < img.w);
+    XGEAssert(y + h < img.h);
+    unsigned int bytesPerPixel = GetBytesPerPixel(format);
+    for (int i = 0; i < h; i++) {
+        memcpy(&img.getData()[(img.getWidth() * (y + i) + x) * bytesPerPixel], &data[i * w * bytesPerPixel], w * bytesPerPixel);
+    }
+}
+
 Image Image::fromStream(InputStream &stream) {
     char sig[8];
     XGEAssert(stream.read(sig, 8) == 8);

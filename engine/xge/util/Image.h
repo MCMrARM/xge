@@ -13,6 +13,8 @@ namespace xge {
         GRAY, RGB, RGBA
     };
 
+    unsigned int GetBytesPerPixel(ImageFormat format);
+
     struct ImagePixelColor {
         unsigned char a, r, g, b;
     };
@@ -58,6 +60,8 @@ namespace xge {
         inline ImageFormat getFormat() const {
             return format;
         }
+
+        void copyTo(Image &img, int x, int y);
 
         /**
          * See getPixel() for details.
