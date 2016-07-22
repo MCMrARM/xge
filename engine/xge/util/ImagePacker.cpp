@@ -55,12 +55,24 @@ ImagePackerResult ImagePacker::build(int width, int height) {
         int itemH = item.image.getHeight();
         for (int i = 0; i < height; i++) {
             auto oldPossibilitiesToCheck = std::move(possibilitiesToCheck);
-            for (auto pb : oldPossibilitiesToCheck) {
-                for (std::pair<int, int> &p : v[i]) {
+            for (std::pair<int, int> &p : v[i]) {
+                if (p.second - p.first < itemW)
+                    continue;
+                if (itemH == 1) {
+                    itemX = p.first;
+                    itemY = i;
+                    solved = true;
+                    break;
+                }
+                bool foundExact = false;
+                for (auto pb : oldPossibilitiesToCheck) {
                     if (p.first > std::get<1>(pb))
                         break;
                     int minX = std::max(p.first, std::get<0>(pb));
                     int maxX = std::min(p.second, std::get<1>(pb));
+                    if (minX == p.first && maxX == p.second) {
+                        foundExact = true;
+                    }
                     if (maxX - minX >= itemW) {
                         if (itemH <= i - std::get<2>(pb) + 1) {
                             itemX = minX;
@@ -71,21 +83,11 @@ ImagePackerResult ImagePacker::build(int width, int height) {
                         possibilitiesToCheck.push_back(std::make_tuple(minX, maxX, std::get<2>(pb)));
                     }
                 }
+                if (!foundExact)
+                    possibilitiesToCheck.push_back(std::make_tuple(p.first, p.second, i));
+
                 if (solved)
                     break;
-            }
-            if (solved)
-                break;
-            for (std::pair<int, int> &p : v[i]) {
-                if (p.second - p.first >= itemW) {
-                    if (itemH == 1) {
-                        itemX = p.first;
-                        itemY = i;
-                        solved = true;
-                        break;
-                    }
-                    possibilitiesToCheck.push_back(std::make_tuple(p.first, p.second, i));
-                }
             }
             if (solved)
                 break;
@@ -97,10 +99,20 @@ ImagePackerResult ImagePacker::build(int width, int height) {
                     if (itemX >= it->first && itemX + itemW <= it->second) {
                         if (itemX == it->first) {
                             it->first = itemX + itemW;
+                            if (it->first == it->second) {
+                                v[i].erase(it);
+                            }
                         } else {
                             int s = it->second;
                             it->second = itemX;
-                            if (s > itemX + itemW) {
+                            if (it->first == it->second) {
+                                if (s > itemX + itemW) {
+                                    it->first = itemX + itemW;
+                                    it->second = s;
+                                } else {
+                                    v[i].erase(it);
+                                }
+                            } else if (s > itemX + itemW) {
                                 v[i].insert(++it, {itemX + itemW, s});
                             }
                         }

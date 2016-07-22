@@ -59,7 +59,7 @@ namespace xge {
         float getSpacing(unsigned int char1, unsigned int char2);
 
     public:
-        Font(std::vector<char> data, unsigned int charHeight, unsigned int charsPerUnicodeAtlas = 32);
+        Font(std::vector<char> data, unsigned int charHeight, unsigned int charsPerUnicodeAtlas = 256);
 
         std::shared_ptr<FontMesh> buildASCII(MeshBuilderConfig &config, float x, float y, const std::string &text,
                                              glm::vec4 color);
