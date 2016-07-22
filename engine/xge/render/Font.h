@@ -61,9 +61,9 @@ namespace xge {
     public:
         Font(std::vector<char> data, unsigned int charHeight, unsigned int charsPerUnicodeAtlas = 256);
 
-        std::shared_ptr<FontMesh> buildASCII(MeshBuilderConfig &config, float x, float y, const std::string &text,
+        std::shared_ptr<FontMesh> buildASCII(const MeshBuilderConfig &config, float x, float y, const std::string &text,
                                              glm::vec4 color);
-        std::shared_ptr<FontMesh> buildUTF8(MeshBuilderConfig &config, float x, float y, const UTF8String &text,
+        std::shared_ptr<FontMesh> buildUTF8(const MeshBuilderConfig &config, float x, float y, const UTF8String &text,
                                             glm::vec4 color);
 
     };

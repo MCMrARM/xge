@@ -125,7 +125,7 @@ std::pair<Font::FontAtlas *, Font::FontChar *> Font::getChar(unsigned int ch) {
     return { atlas, &atlas->chars.at(ch) };
 }
 
-std::shared_ptr<FontMesh> Font::buildASCII(MeshBuilderConfig &config, float x, float y, const std::string &text,
+std::shared_ptr<FontMesh> Font::buildASCII(const MeshBuilderConfig &config, float x, float y, const std::string &text,
                                            glm::vec4 color) {
     char pc = 0;
     MeshBuilder builder (config);
@@ -147,7 +147,7 @@ std::shared_ptr<FontMesh> Font::buildASCII(MeshBuilderConfig &config, float x, f
     return std::move(ret);
 }
 
-std::shared_ptr<FontMesh> Font::buildUTF8(MeshBuilderConfig &config, float x, float y, const UTF8String &text,
+std::shared_ptr<FontMesh> Font::buildUTF8(const MeshBuilderConfig &config, float x, float y, const UTF8String &text,
                                           glm::vec4 color) {
     unsigned int pc = 0;
     std::map<FontAtlas *, MeshBuilder> builders;
