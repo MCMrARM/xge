@@ -127,27 +127,24 @@ std::pair<Font::FontAtlas *, Font::FontChar *> Font::getChar(unsigned int ch) {
 
 std::shared_ptr<FontMesh> Font::buildASCII(MeshBuilderConfig &config, float x, float y, const std::string &text,
                                            glm::vec4 color) {
-    /*
     char pc = 0;
     MeshBuilder builder (config);
-    XGEAssert(chars[52].tex);
-    builder.setPrimaryTexture(chars[52].tex);
+    builder.setPrimaryTexture(defaultAtlas.tex);
     for (char c : text) {
-        if (chars.count((unsigned int) c) <= 0)
+        if (defaultAtlas.chars.count((unsigned int) c) <= 0)
             continue;
-        const auto &cd = chars.at((unsigned int) c);
+        const auto &cd = defaultAtlas.chars.at((unsigned int) c);
 
-        if (pc != 0) {
+        if (pc != 0)
             x += getSpacing((unsigned int) pc, (unsigned int) c);
-        }
+
         builder.rect({x + cd.offX, y + cd.offY}, {x + cd.offX + cd.w, y + cd.offY + cd.h}, cd.uv1, cd.uv2, color);
         x += cd.adv;
         pc = c;
     }
-    //builder.rect({0.f, 0.f}, {400.f, 400.f}, {0.f, 1.f}, {1.f, 0.f}, {1.f, 1.f, 1.f, 1.f});
     std::shared_ptr<FontMesh> ret (new FontMesh());
-    ret->baseMesh = builder.build();
-    return std::move(ret);*/
+    ret->meshes.push_back(builder.build());
+    return std::move(ret);
 }
 
 std::shared_ptr<FontMesh> Font::buildUTF8(MeshBuilderConfig &config, float x, float y, const UTF8String &text,

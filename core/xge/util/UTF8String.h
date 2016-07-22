@@ -43,25 +43,12 @@ namespace xge {
             }
         };
 
-        struct iterator : public const_iterator {
-        private:
-            UTF8String &str;
-        public:
-            iterator(UTF8String &str, size_t off) : const_iterator(str, off), str(str) {
-                //
-            }
-        };
-
-        UTF8String(char *str) : buf(str) {
+        UTF8String(const char *str) : buf(str) {
         }
         UTF8String(const std::string &str) : buf(str) {
         }
 
-        iterator begin() { return iterator(*this, 0); }
-
         const_iterator begin() const { return const_iterator(*this, 0); }
-
-        iterator end() { return iterator(*this, buf.size()); }
 
         const_iterator end() const { return const_iterator(*this, buf.size()); }
 
