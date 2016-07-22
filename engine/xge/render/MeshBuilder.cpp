@@ -8,11 +8,7 @@
 
 using namespace xge;
 
-#define pushValTypeFloat(vector, val) { \
-        ShaderValue shaderValType; \
-        shaderValType.f = val; \
-        vector->push_back(shaderValType); \
-    }
+#define pushValTypeFloat(vector, val) vector->push_back(AsShaderValue((float) val));
 #define pushValTypeVec2(vector, val) { \
         pushValTypeFloat(vector, val.x); \
         pushValTypeFloat(vector, val.y); \
@@ -124,6 +120,7 @@ std::shared_ptr<Mesh> MeshBuilder::build(bool reuse) {
         val.attribute = *it;
         val.buffer.upload(it->type, *itV, *itBU);
         ret->attributes[it->attributeId] = std::move(val);
+        ret->attributesOrder.push_back(it->attributeId);
     }
     if (reuse) {
         mesh = std::shared_ptr<Mesh>(new Mesh());

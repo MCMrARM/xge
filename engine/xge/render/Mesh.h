@@ -5,6 +5,7 @@
 #include <memory>
 #include "Shader.h"
 #include "GPUBuffer.h"
+#include "MeshEditor.h"
 
 namespace xge {
 
@@ -28,6 +29,7 @@ namespace xge {
         std::shared_ptr<ShaderProgram> program;
         unsigned int vertexCount = 0;
         std::unordered_map<int, AttributeValue> attributes;
+        std::vector<int> attributesOrder; // this is used for mesh editing
         std::unordered_map<int, UniformValue> uniforms;
         DrawMode drawMode = DrawMode::TRIANGLES;
 
@@ -54,6 +56,10 @@ namespace xge {
         }
 
         void draw();
+
+        inline MeshEditor edit() {
+            return MeshEditor (*this);
+        }
 
     };
 

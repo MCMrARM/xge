@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include "ShaderValue.h"
 #include "ShaderValueType.h"
 
 namespace xge {
@@ -16,12 +17,6 @@ namespace xge {
         Compute,
         // gles 3.2+
         TessControl, TessEvaluation, Geometry
-    };
-
-    union ShaderValue {
-        float f;
-        int i;
-        unsigned int ui;
     };
 
     struct ShaderAttribute {

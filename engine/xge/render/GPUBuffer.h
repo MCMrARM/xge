@@ -41,6 +41,8 @@ namespace xge {
 
         void upload(ShaderValueType type, std::vector<ShaderValue> const &data, Usage usage = Usage::Static);
 
+        void uploadFragment(ShaderValueType type, unsigned int offset, std::vector<ShaderValue> const &data);
+
     };
 
 }
