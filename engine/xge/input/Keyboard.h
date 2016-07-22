@@ -21,6 +21,8 @@ namespace xge {
 
         void setKeyPressed(int key, bool pressed, ModifierKeysState modifierKeys);
 
+        void onCharTyped(unsigned int charCode);
+
     public:
         Keyboard(KeyboardEventListener &listener);
 

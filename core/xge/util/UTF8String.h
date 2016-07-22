@@ -9,13 +9,14 @@ namespace xge {
     public:
         typedef unsigned int Char;
 
+        static unsigned int encodeChar(Char ch, char out[]);
+
     private:
         std::string buf;
-        size_t len;
 
     public:
         struct const_iterator {
-        private:
+        protected:
             const UTF8String &str;
             size_t off;
 
@@ -25,6 +26,10 @@ namespace xge {
 
         public:
             const_iterator(const UTF8String &str, size_t off) : str(str), off(off) {
+            }
+
+            size_t offset() {
+                return off;
             }
 
             Char operator*() {
@@ -43,14 +48,34 @@ namespace xge {
             }
         };
 
-        UTF8String(const char *str) : buf(str) {
-        }
-        UTF8String(const std::string &str) : buf(str) {
-        }
+        UTF8String() { }
+        UTF8String(const char *str) : buf(str) { }
+        UTF8String(const std::string &str) : buf(str) { }
+        UTF8String(const UTF8String &str) : buf(str.buf) { }
+
+        unsigned int length() const;
+
+        UTF8String substr(int start, int len = -1) const;
+
+        inline std::string &cpp_str() { return buf; }
+        inline const std::string &cpp_str() const { return buf; }
+
+        inline const char *c_str() const { return buf.c_str(); }
 
         const_iterator begin() const { return const_iterator(*this, 0); }
 
         const_iterator end() const { return const_iterator(*this, buf.size()); }
+
+        UTF8String operator+(Char ch) const {
+            std::string str = buf;
+            char data[6];
+            unsigned int len = encodeChar(ch, data);
+            str.append(data, len);
+            return UTF8String (str);
+        }
+        UTF8String operator+(UTF8String str) const {
+            return UTF8String (buf + str.buf);
+        }
 
 
     };

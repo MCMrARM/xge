@@ -19,3 +19,7 @@ void Keyboard::setKeyPressed(int key, bool pressed, ModifierKeysState state) {
         listener.onKeyRelease(KeyReleaseEvent (*this, key, state));
     }
 }
+
+void Keyboard::onCharTyped(unsigned int charCode) {
+    listener.onCharTyped(charCode);
+}

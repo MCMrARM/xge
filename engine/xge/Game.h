@@ -100,6 +100,10 @@ namespace xge {
             for (auto const &k : keyboardListeners)
                 k->onKeyRelease(event);
         }
+        virtual void onCharTyped(unsigned int charCode) {
+            for (auto const &k : keyboardListeners)
+                k->onCharTyped(charCode);
+        }
 
     };
 

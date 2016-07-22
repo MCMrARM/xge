@@ -28,3 +28,11 @@ void Platform::setKeyboardButton(int key, bool pressed, bool shift, bool control
     }
     gameInstance->getKeyboard().setKeyPressed(key, pressed, {shift, control, alt, super});
 }
+
+void Platform::charTyped(unsigned int charCode) {
+    if (gameInstance == nullptr) {
+        Log::error("Platform", "Game Instance is null!");
+        return;
+    }
+    gameInstance->getKeyboard().onCharTyped(charCode);
+}

@@ -1,6 +1,46 @@
 #include "UTF8String.h"
+#include "Log.h"
 
 using namespace xge;
+
+unsigned int UTF8String::encodeChar(Char ch, char *out) {
+    if (ch > 0b111111111111111111111111111) {
+        out[0] = (char) (0b11111100 | ((ch >> 24) & 0b1));
+        out[1] = (char) (0b10000000 | ((ch >> 18) & 0b111111));
+        out[2] = (char) (0b10000000 | ((ch >> 12) & 0b111111));
+        out[3] = (char) (0b10000000 | ((ch >> 6) & 0b111111));
+        out[4] = (char) (0b10000000 | (ch & 0b111111));
+        return 6;
+    }
+    if (ch > 0b1111111111111111111111) {
+        out[0] = (char) (0b11111000 | ((ch >> 24) & 0b11));
+        out[1] = (char) (0b10000000 | ((ch >> 18) & 0b111111));
+        out[2] = (char) (0b10000000 | ((ch >> 12) & 0b111111));
+        out[3] = (char) (0b10000000 | ((ch >> 6) & 0b111111));
+        out[4] = (char) (0b10000000 | (ch & 0b111111));
+        return 5;
+    }
+    if (ch > 0b11111111111111111) {
+        out[0] = (char) (0b11110000 | ((ch >> 18) & 0b111));
+        out[1] = (char) (0b10000000 | ((ch >> 12) & 0b111111));
+        out[2] = (char) (0b10000000 | ((ch >> 6) & 0b111111));
+        out[3] = (char) (0b10000000 | (ch & 0b111111));
+        return 4;
+    }
+    if (ch > 0b111111111111) {
+        out[0] = (char) (0b11100000 | ((ch >> 12) & 0b1111));
+        out[1] = (char) (0b10000000 | ((ch >> 6) & 0b111111));
+        out[2] = (char) (0b10000000 | (ch & 0b111111));
+        return 3;
+    }
+    if (ch > 0b1111111) {
+        out[0] = (char) (0b11000000 | ((ch >> 6) & 0b11111));
+        out[1] = (char) (0b10000000 | (ch & 0b111111));
+        return 2;
+    }
+    out[0] = (char) (ch & 0b1111111);
+    return 1;
+}
 
 UTF8String::Char UTF8String::const_iterator::getValue() {
     size_t len = str.buf.length() - off;
@@ -64,4 +104,22 @@ unsigned int UTF8String::const_iterator::getValueSize() {
     if ((c & 0b11100000) == 0b11000000)
         return 2;
     return 1;
+}
+
+unsigned int UTF8String::length() const {
+    unsigned int ret = 0;
+    for (Char c : *this)
+        ret++;
+    return ret;
+}
+
+UTF8String UTF8String::substr(int start, int len) const {
+    XGEAssert(start >= 0 && len >= 0);
+    auto it = begin();
+    while (start--)
+        ++it;
+    auto it2 = it;
+    while (len--)
+        ++it2;
+    return UTF8String(buf.substr(it.offset(), it2.offset() - it.offset()));
 }

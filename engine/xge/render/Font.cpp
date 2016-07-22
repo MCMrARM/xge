@@ -120,7 +120,7 @@ std::pair<Font::FontAtlas *, Font::FontChar *> Font::getChar(unsigned int ch) {
             atlas = &unicodeAtlases.at(atlasId);
         }
     }
-    if (atlas == nullptr || atlas->chars.count(ch) < 0)
+    if (atlas == nullptr || atlas->chars.count(ch) <= 0)
         return { nullptr, nullptr };
     return { atlas, &atlas->chars.at(ch) };
 }
