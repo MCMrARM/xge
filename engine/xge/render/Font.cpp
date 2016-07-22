@@ -169,11 +169,41 @@ std::shared_ptr<FontMesh> Font::buildUTF8(const MeshBuilderConfig &config, float
         x += cd.adv;
         pc = c;
     }
-    //builder.rect({0.f, 0.f}, {400.f, 400.f}, {0.f, 1.f}, {1.f, 0.f}, {1.f, 1.f, 1.f, 1.f});
     std::shared_ptr<FontMesh> ret (new FontMesh());
     for (auto &p : builders)
         ret->meshes.push_back(p.second.build());
     return std::move(ret);
+}
+
+float Font::getWidthASCII(const std::string &text) {
+    float w = 0.f;
+    char pc = 0;
+    for (char c : text) {
+        if (defaultAtlas.chars.count((unsigned int) c) <= 0)
+            continue;
+        const auto &cd = defaultAtlas.chars.at((unsigned int) c);
+        if (pc != 0)
+            w += getSpacing((unsigned int) pc, (unsigned int) c);
+        w += cd.adv;
+        pc = c;
+    }
+    return w;
+}
+
+float Font::getWidthUTF8(const UTF8String &text) {
+    float w = 0.f;
+    unsigned int pc = 0;
+    for (UTF8String::Char c : text) {
+        auto p = getChar(c);
+        if (p.first == nullptr || p.second == nullptr)
+            continue;
+        const auto &cd = *p.second;
+        if (pc != 0)
+            w += getSpacing(pc, c);
+        w += cd.adv;
+        pc = c;
+    }
+    return w;
 }
 
 float Font::getSpacing(unsigned int char1, unsigned int char2) {

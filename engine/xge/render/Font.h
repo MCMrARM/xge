@@ -66,6 +66,9 @@ namespace xge {
         std::shared_ptr<FontMesh> buildUTF8(const MeshBuilderConfig &config, float x, float y, const UTF8String &text,
                                             glm::vec4 color);
 
+        float getWidthASCII(const std::string &text);
+        float getWidthUTF8(const UTF8String &text);
+
     };
 
 }
