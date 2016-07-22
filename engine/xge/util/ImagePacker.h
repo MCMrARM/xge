@@ -34,12 +34,14 @@ namespace xge {
                 return packedItems.at(name);
             return PackedItem();
         }
-        inline std::pair<glm::vec2, glm::vec2> getItemUVSet(const std::string &name) {
-            PackedItem item = getItem(name);
+        inline std::pair<glm::vec2, glm::vec2> getItemUVSet(const PackedItem &item) {
             float imgW = (float) this->imgW;
             float imgH = (float) this->imgH;
-            return { { item.x / imgW, item.y / imgH },
-                     { (item.x + item.w) / imgW, (item.y + item.h) / imgH } };
+            return { { item.x / imgW, (item.y + item.h) / imgH },
+                     { (item.x + item.w) / imgW, item.y / imgH } };
+        }
+        inline std::pair<glm::vec2, glm::vec2> getItemUVSet(const std::string &name) {
+            return getItemUVSet(getItem(name));
         }
 
     };

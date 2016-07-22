@@ -156,6 +156,10 @@ namespace xge {
         MeshBuilder &quad(glm::vec3 pos1, glm::vec3 pos2, glm::vec3 pos3, glm::vec3 pos4,
                   glm::vec2 uv1, glm::vec2 uv2, glm::vec2 uv3, glm::vec2 uv4,
                   glm::vec4 color1, glm::vec4 color2, glm::vec4 color3, glm::vec4 color4);
+        inline MeshBuilder &quad(glm::vec3 pos1, glm::vec3 pos2, glm::vec3 pos3, glm::vec3 pos4,
+                                 glm::vec2 uv1, glm::vec2 uv2, glm::vec2 uv3, glm::vec2 uv4, glm::vec4 color) {
+            return quad(pos1, pos2, pos3, pos4, uv1, uv2, uv3, uv4, color, color, color, color);
+        }
         inline MeshBuilder &quad(glm::vec3 pos1, glm::vec3 pos2, glm::vec3 pos3, glm::vec3 pos4) {
             return quad(pos1, pos2, pos3, pos4, glm::vec2(0.f), glm::vec2(0.f), glm::vec2(0.f), glm::vec2(0.f),
                         glm::vec4(1.f), glm::vec4(1.f), glm::vec4(1.f), glm::vec4(1.f));
@@ -176,6 +180,9 @@ namespace xge {
             return quad(glm::vec3(pos1.x, pos1.y, 0.f), glm::vec3(pos1.x, pos2.y, 0.f), glm::vec3(pos2.x, pos2.y, 0.f),
                         glm::vec3(pos2.x, pos1.y, 0.f), uv1, glm::vec2(uv1.x, uv2.y), uv2, glm::vec2(uv2.x, uv1.y),
                         color1, color2, color3, color4);
+        }
+        inline MeshBuilder &rect(glm::vec2 pos1, glm::vec2 pos2, glm::vec2 uv1, glm::vec2 uv2, glm::vec4 color) {
+            return rect(pos1, pos2, uv1, uv2, color, color, color, color);
         }
         inline MeshBuilder &rectUV(glm::vec2 pos1, glm::vec2 pos2, glm::vec2 uv1, glm::vec2 uv2) {
             return rect(pos1, pos2, uv1, uv2, glm::vec4(1.f), glm::vec4(1.f), glm::vec4(1.f), glm::vec4(1.f));

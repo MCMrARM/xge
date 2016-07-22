@@ -16,7 +16,7 @@ void ImagePacker::add(std::string name, Image image) {
 }
 
 ImagePackerResult ImagePacker::build() {
-    for (int i = 32; ; i *= 2) {
+    for (int i = 32; i < 16384; i *= 2) {
         ImagePackerResult result = build(i, i);
         if (!result)
             continue;
@@ -40,7 +40,7 @@ ImagePackerResult ImagePacker::build(int width, int height) {
         std::sort(items.begin(), items.end());
     std::vector<std::pair<int, int>> v[height];
     for (int i = 0; i < height; i++)
-        v->push_back({0, width});
+        v[i].push_back({0, width});
     std::vector<std::tuple<int, int, int>> possibilitiesToCheck; // min x, max y, min y
     ImageFormat format = items[0].image.getFormat();
     ImagePackerResult result;
@@ -57,14 +57,14 @@ ImagePackerResult ImagePacker::build(int width, int height) {
             auto oldPossibilitiesToCheck = std::move(possibilitiesToCheck);
             for (auto pb : oldPossibilitiesToCheck) {
                 for (std::pair<int, int> &p : v[i]) {
-                    if (p.second > std::get<1>(pb))
+                    if (p.first > std::get<1>(pb))
                         break;
                     int minX = std::max(p.first, std::get<0>(pb));
                     int maxX = std::min(p.second, std::get<1>(pb));
                     if (maxX - minX >= itemW) {
-                        if (itemH >= std::get<2>(pb) - i + 1) {
+                        if (itemH <= i - std::get<2>(pb) + 1) {
                             itemX = minX;
-                            itemY = i;
+                            itemY = std::get<2>(pb);
                             solved = true;
                             break;
                         }
@@ -78,7 +78,7 @@ ImagePackerResult ImagePacker::build(int width, int height) {
                 break;
             for (std::pair<int, int> &p : v[i]) {
                 if (p.second - p.first >= itemW) {
-                    if (itemH >= 1) {
+                    if (itemH == 1) {
                         itemX = p.first;
                         itemY = i;
                         solved = true;
@@ -90,17 +90,17 @@ ImagePackerResult ImagePacker::build(int width, int height) {
             if (solved)
                 break;
         }
-        printf("Placing item at %i %i\n", itemX, itemY);
+        //printf("Placing item at %i %i (size: %i %i)\n", itemX, itemY, itemW, itemH);
         if (solved) {
             for (int i = itemY; i < itemY + itemH; i++) {
                 for (auto it = v[i].begin(); it != v[i].end(); it++) {
-                    if (itemX >= it->first && itemX + itemW < it->second) {
+                    if (itemX >= it->first && itemX + itemW <= it->second) {
                         if (itemX == it->first) {
                             it->first = itemX + itemW;
                         } else {
                             int s = it->second;
                             it->second = itemX;
-                            if (itemX + itemW != s) {
+                            if (s > itemX + itemW) {
                                 v[i].insert(++it, {itemX + itemW, s});
                             }
                         }

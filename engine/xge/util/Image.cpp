@@ -19,8 +19,10 @@ unsigned int xge::GetBytesPerPixel(ImageFormat format) {
 
 void Image::copyTo(Image &img, int x, int y) {
     XGEAssert(img.format == format);
-    XGEAssert(x + w < img.w);
-    XGEAssert(y + h < img.h);
+    XGEAssert(x + w > 0);
+    XGEAssert(y + h > 0);
+    XGEAssert(x + w <= img.w);
+    XGEAssert(y + h <= img.h);
     unsigned int bytesPerPixel = GetBytesPerPixel(format);
     for (int i = 0; i < h; i++) {
         memcpy(&img.getData()[(img.getWidth() * (y + i) + x) * bytesPerPixel], &data[i * w * bytesPerPixel], w * bytesPerPixel);

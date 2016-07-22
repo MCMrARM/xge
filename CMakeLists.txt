@@ -8,9 +8,11 @@ find_package(PNG REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(PkgConfig REQUIRED)
+find_package(Freetype REQUIRED)
 
 pkg_search_module(GLFW REQUIRED glfw3)
 
+include_directories(${FREETYPE_INCLUDE_DIRS})
 include_directories(core/)
 include_directories(engine/)
 include_directories(platform/linux)
@@ -26,7 +28,7 @@ LIST(APPEND ENGINE_SOURCES ${ENGINE_HEADERS})
 LIST(APPEND LINUX_SOURCES ${LINUX_HEADERS})
 
 add_library(xge STATIC ${CORE_SOURCES} ${ENGINE_SOURCES} ${LINUX_SOURCES})
-target_link_libraries(xge ${CMAKE_THREAD_LIBS_INIT} ${OPENGL_LIBRARIES} ${PNG_LIBRARIES} ${GLFW_STATIC_LIBRARIES} ${GLEW_LIBRARIES})
+target_link_libraries(xge ${CMAKE_THREAD_LIBS_INIT} ${OPENGL_LIBRARIES} ${PNG_LIBRARIES} ${GLFW_STATIC_LIBRARIES} ${GLEW_LIBRARIES} ${FREETYPE_LIBRARIES})
 target_include_directories(xge PUBLIC ${OPENGL_INCLUDE_DIRS} ${GLEW_INCLUDE_DIRS})
 
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
