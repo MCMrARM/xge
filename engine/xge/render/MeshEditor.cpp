@@ -9,36 +9,44 @@
 #include "Mesh.h"
 #include "ShaderValueType.h"
 
+#define pushValTypeFloat(vector, val) vector.push_back(AsShaderValue((float) val));
+#define pushValTypeVec2(vector, val) { \
+        pushValTypeFloat(vector, val.x); \
+        pushValTypeFloat(vector, val.y); \
+    }
+#define pushValTypeVec3(vector, val) { \
+        pushValTypeVec2(vector, val); \
+        pushValTypeFloat(vector, val.z); \
+    }
+#define pushValTypeVec4(vector, val) { \
+        pushValTypeVec3(vector, val); \
+        pushValTypeFloat(vector, val.w); \
+    }
+
 using namespace xge;
 
 MeshEditor& MeshEditor::edit(unsigned int i, ...) {
     va_list args;
     va_start(args, i);
-    editEntries.insert({i, values.size()});
+    editEntries.insert({i, {values.size(), 1}});
     for (auto it = mesh.attributes.begin(); it != mesh.attributes.end(); it++) {
         switch (it->second.attribute.type) {
             case ShaderValueType::Float:
-                values.push_back(AsShaderValue((float) va_arg(args, double)));
+                pushValTypeFloat(values, (float) va_arg(args, double));
                 break;
             case ShaderValueType::Vec2: {
                 auto val = va_arg(args, glm::vec2);
-                values.push_back(AsShaderValue(val.x));
-                values.push_back(AsShaderValue(val.y));
+                pushValTypeVec2(values, val);
             }
                 break;
             case ShaderValueType::Vec3: {
                 auto val = va_arg(args, glm::vec3);
-                values.push_back(AsShaderValue(val.x));
-                values.push_back(AsShaderValue(val.y));
-                values.push_back(AsShaderValue(val.z));
+                pushValTypeVec3(values, val);
             }
                 break;
             case ShaderValueType::Vec4: {
                 auto val = va_arg(args, glm::vec4);
-                values.push_back(AsShaderValue(val.x));
-                values.push_back(AsShaderValue(val.y));
-                values.push_back(AsShaderValue(val.z));
-                values.push_back(AsShaderValue(val.w));
+                pushValTypeVec4(values, val);
             }
                 break;
             default:
@@ -49,67 +57,96 @@ MeshEditor& MeshEditor::edit(unsigned int i, ...) {
     return *this;
 }
 
+MeshEditor& MeshEditor::triangle(unsigned int i, glm::vec3 pos1, glm::vec3 pos2, glm::vec3 pos3, glm::vec2 uv1,
+                                 glm::vec2 uv2, glm::vec2 uv3, glm::vec4 color1, glm::vec4 color2, glm::vec4 color3) {
+    XGEAssert(mesh.drawMode == xge::Mesh::DrawMode::TRIANGLES);
+    auto itU = config.attributeUsages.begin();
+    editEntries.insert({i, {values.size(), 3}});
+    for (auto it = config.attributes.begin(); it != config.attributes.end() && itU != config.attributeUsages.end();
+         it++, itU++) {
+        MeshAttributeUsage usage = *itU;
+        switch (usage) {
+            case MeshAttributeUsage::POSITION:
+                if (it->type == ShaderValueType::Vec3) {
+                    pushValTypeVec3(values, pos1);
+                    pushValTypeVec3(values, pos2);
+                    pushValTypeVec3(values, pos3);
+                } else if (it->type == ShaderValueType::Vec2) {
+                    pushValTypeVec2(values, pos1);
+                    pushValTypeVec2(values, pos2);
+                    pushValTypeVec2(values, pos3);
+                } else {
+#ifndef NDEBUG
+                    Log::error("MeshEditor", "Invalid position attribute type");
+#endif
+                    abort();
+                }
+                break;
+            case MeshAttributeUsage::TEXTURE_UV:
+                pushValTypeVec2(values, uv1);
+                pushValTypeVec2(values, uv2);
+                pushValTypeVec2(values, uv3);
+                break;
+            case MeshAttributeUsage::COLOR:
+                pushValTypeVec4(values, color1);
+                pushValTypeVec4(values, color2);
+                pushValTypeVec4(values, color3);
+                break;
+            default: {
+#ifndef NDEBUG
+                Log::error("MeshEditor", "AttributeUsage::CUSTOM is not allowed when using MeshEditor::triangle");
+#endif
+                abort();
+            }
+        }
+    }
+    return *this;
+}
+
 void MeshEditor::commit() {
-    size_t attribCount = mesh.attributesOrder.size();
+    size_t attribCount = config.attributes.size();
     Mesh::AttributeValue *attribs [attribCount];
     for (size_t i = 0; i < attribCount; i++)
-        attribs[i] = &mesh.attributes.at(mesh.attributesOrder[i]);
+        attribs[i] = &mesh.attributes.at(config.attributes[i].attributeId);
     std::vector<ShaderValue> attribValues[attribCount];
     unsigned int startVertex = UINT32_MAX;
     unsigned int endVertex = UINT32_MAX;
-    size_t prevSizes[attribCount];
-    memset(prevSizes, 0, sizeof(prevSizes));
     for (auto &p : editEntries) {
+        unsigned int c = p.second.second;
         if (startVertex == UINT32_MAX) {
             startVertex = p.first;
-            endVertex = p.first;
-        } else if (endVertex == p.first) {
+            endVertex = p.first + c;
+        } else if (p.first < endVertex) {
             // we told the user not to do this
-            for (unsigned int i = 0; i < attribCount; i++)
-                attribValues[i].resize(prevSizes[i]);
-        } else if (endVertex == p.first + 1) {
-            endVertex++;
+            for (size_t i = 0; i < attribCount; i++)
+                attribValues[i].resize(attribValues[i].size() - GetShaderValueTypeComponentCount(attribs[i]->attribute.type));
+        } else if (endVertex == p.first) {
+            endVertex += c;
         } else {
             // id not in order, upload & start new
             for (size_t i = 0; i < attribCount; i++) {
                 Mesh::AttributeValue &attrib = *attribs[i];
-                attrib.buffer.uploadFragment(attrib.attribute.type, startVertex, attribValues[i]);
+                attrib.buffer.uploadFragment(attrib.attribute.type,
+                                             startVertex * GetShaderValueTypeComponentCount(attribs[i]->attribute.type),
+                                             attribValues[i]);
                 attribValues[i].clear();
             }
-            memset(prevSizes, 0, sizeof(prevSizes));
+            startVertex = p.first;
+            endVertex = p.first + c;
         }
-        for (unsigned int i = 0; i < attribCount; i++)
-            prevSizes[i] = attribValues[i].size();
-        size_t off = p.second;
+        size_t off = p.second.first;
         for (size_t i = 0; i < attribCount; i++) {
-            switch (attribs[i]->attribute.type) {
-                case ShaderValueType::Float:
-                    attribValues[i].push_back(values[off++]);
-                    break;
-                case ShaderValueType::Vec2:
-                    attribValues[i].push_back(values[off++]);
-                    attribValues[i].push_back(values[off++]);
-                    break;
-                case ShaderValueType::Vec3:
-                    attribValues[i].push_back(values[off++]);
-                    attribValues[i].push_back(values[off++]);
-                    attribValues[i].push_back(values[off++]);
-                    break;
-                case ShaderValueType::Vec4:
-                    attribValues[i].push_back(values[off++]);
-                    attribValues[i].push_back(values[off++]);
-                    attribValues[i].push_back(values[off++]);
-                    attribValues[i].push_back(values[off++]);
-                    break;
-                default:
-                    continue;
-            }
+            size_t t = p.second.second * GetShaderValueTypeComponentCount(attribs[i]->attribute.type);
+            while (t--)
+                attribValues[i].push_back(values[off++]);
         }
     }
     if (attribValues[0].size() > 0) {
         for (size_t i = 0; i < attribCount; i++) {
             Mesh::AttributeValue &attrib = *attribs[i];
-            attrib.buffer.uploadFragment(attrib.attribute.type, startVertex, attribValues[i]);
+            attrib.buffer.uploadFragment(attrib.attribute.type,
+                                         startVertex * GetShaderValueTypeComponentCount(attribs[i]->attribute.type),
+                                         attribValues[i]);
         }
     }
 }

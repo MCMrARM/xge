@@ -137,6 +137,13 @@ namespace xge {
          */
         MeshBuilder &push(...);
 
+        /**
+         * This function returns how many vertex were already pushed.
+         */
+        inline unsigned int getVertexCount() {
+            return vertexCount;
+        }
+
         MeshBuilder &triangle(glm::vec3 pos1, glm::vec3 pos2, glm::vec3 pos3, glm::vec2 uv1, glm::vec2 uv2, glm::vec2 uv3,
                       glm::vec4 color1, glm::vec4 color2, glm::vec4 color3);
         inline MeshBuilder &triangle(glm::vec3 pos1, glm::vec3 pos2, glm::vec3 pos3) {
@@ -153,9 +160,12 @@ namespace xge {
         }
 
         // order: bottom left, top left, top right, top bottom
-        MeshBuilder &quad(glm::vec3 pos1, glm::vec3 pos2, glm::vec3 pos3, glm::vec3 pos4,
-                  glm::vec2 uv1, glm::vec2 uv2, glm::vec2 uv3, glm::vec2 uv4,
-                  glm::vec4 color1, glm::vec4 color2, glm::vec4 color3, glm::vec4 color4);
+        inline MeshBuilder &quad(glm::vec3 pos1, glm::vec3 pos2, glm::vec3 pos3, glm::vec3 pos4,
+                                 glm::vec2 uv1, glm::vec2 uv2, glm::vec2 uv3, glm::vec2 uv4,
+                                 glm::vec4 color1, glm::vec4 color2, glm::vec4 color3, glm::vec4 color4) {
+            triangle(pos3, pos2, pos1, uv3, uv2, uv1, color3, color2, color1);
+            return triangle(pos3, pos1, pos4, uv3, uv1, uv4, color3, color1, color4);
+        }
         inline MeshBuilder &quad(glm::vec3 pos1, glm::vec3 pos2, glm::vec3 pos3, glm::vec3 pos4,
                                  glm::vec2 uv1, glm::vec2 uv2, glm::vec2 uv3, glm::vec2 uv4, glm::vec4 color) {
             return quad(pos1, pos2, pos3, pos4, uv1, uv2, uv3, uv4, color, color, color, color);

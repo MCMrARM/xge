@@ -102,13 +102,6 @@ MeshBuilder &MeshBuilder::triangle(glm::vec3 pos1, glm::vec3 pos2, glm::vec3 pos
     return *this;
 }
 
-MeshBuilder &MeshBuilder::quad(glm::vec3 pos1, glm::vec3 pos2, glm::vec3 pos3, glm::vec3 pos4,
-                       glm::vec2 uv1, glm::vec2 uv2, glm::vec2 uv3, glm::vec2 uv4,
-                       glm::vec4 color1, glm::vec4 color2, glm::vec4 color3, glm::vec4 color4) {
-    triangle(pos3, pos2, pos1, uv3, uv2, uv1, color3, color2, color1);
-    return triangle(pos3, pos1, pos4, uv3, uv1, uv4, color3, color1, color4);
-}
-
 std::shared_ptr<Mesh> MeshBuilder::build(bool reuse) {
     std::shared_ptr<Mesh> ret = std::move(mesh);
     ret->vertexCount = vertexCount;
@@ -120,7 +113,6 @@ std::shared_ptr<Mesh> MeshBuilder::build(bool reuse) {
         val.attribute = *it;
         val.buffer.upload(it->type, *itV, *itBU);
         ret->attributes[it->attributeId] = std::move(val);
-        ret->attributesOrder.push_back(it->attributeId);
     }
     if (reuse) {
         mesh = std::shared_ptr<Mesh>(new Mesh());

@@ -14,6 +14,7 @@ namespace xge {
 
     protected:
         friend class MeshBuilder;
+        friend class MeshEditor;
 
         std::shared_ptr<ShaderProgram> program;
         std::vector<ShaderAttribute> attributes;
