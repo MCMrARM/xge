@@ -96,8 +96,8 @@ Font::FontAtlas Font::buildAtlas(const std::vector<unsigned int> &characters) {
         unsigned int chId = *((const unsigned int *) p.first.data());
         FontChar &ch = ret.chars.at(chId);
         auto uv = packerRet.getItemUVSet(p.second);
-        ch.uv1 = uv.first;
-        ch.uv2 = uv.second;
+        ch.uv1 = { uv.first.x, uv.second.y };
+        ch.uv2 = { uv.second.x, uv.first.y };
     }
 
     return std::move(ret);
