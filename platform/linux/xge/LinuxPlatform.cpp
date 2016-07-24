@@ -41,6 +41,7 @@ void LinuxPlatform::startGame(Game &game) {
     }
     glfwMakeContextCurrent(window);
     gameInstance = &game;
+    glfwSetWindowSizeCallback(window, LinuxPlatform::glfwWindowSizeCallback);
     glfwSetCursorPosCallback(window, LinuxPlatform::glfwMousePosCallback);
     glfwSetMouseButtonCallback(window, LinuxPlatform::glfwMouseButtonCallback);
     glfwSetKeyCallback(window, LinuxPlatform::glfwKeyCallback);
@@ -58,6 +59,11 @@ void LinuxPlatform::startGame(Game &game) {
     }
     gameInstance = nullptr;
     glfwTerminate();
+}
+
+void LinuxPlatform::glfwWindowSizeCallback(GLFWwindow *window, int w, int h) {
+    glViewport(0, 0, w, h);
+    LinuxPlatform::instance->gameInstance->setSize(w, h);
 }
 
 void LinuxPlatform::glfwMousePosCallback(GLFWwindow *window, double xpos, double ypos) {
