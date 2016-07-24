@@ -95,6 +95,9 @@ namespace xge {
                                      glm::vec4 color1, glm::vec4 color2, glm::vec4 color3, glm::vec4 color4) {
             return rect(i, pos1, pos2, glm::vec2(0.f, 0.f), glm::vec2(0.f, 0.f), color1, color2, color3, color4);
         }
+        inline MeshEditor &rectColor(unsigned int i, glm::vec2 pos1, glm::vec2 pos2, glm::vec4 color) {
+            return rect(i, pos1, pos2, glm::vec2(0.f, 0.f), glm::vec2(0.f, 0.f), color, color, color, color);
+        }
 
     };
 

@@ -3,6 +3,7 @@
 #include <xge/opengl.h>
 #include <cstring>
 #include "Texture.h"
+#include "GLError.h"
 
 using namespace xge;
 
@@ -50,6 +51,9 @@ void Mesh::draw() {
             p.second.texture->unbind();
         }
     }
+#ifndef NDEBUG
+    GLError::checkAndThrow();
+#endif
 }
 
 void Mesh::setUniform(ShaderUniform uniform, ShaderValue *value, int count) {
