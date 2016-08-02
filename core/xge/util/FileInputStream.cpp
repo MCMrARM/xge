@@ -4,7 +4,7 @@
 using namespace xge;
 
 FileInputStream::FileInputStream(std::string filename) {
-    file = fopen(filename.c_str(), "r");
+    file = fopen(filename.c_str(), "rb");
     if (file == NULL)
         throw std::runtime_error("Failed to open file");
 }

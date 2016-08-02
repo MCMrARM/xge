@@ -53,10 +53,10 @@ void ConnectionHandler::update() {
     std::lock_guard<std::mutex> lock (mutex);
 
     Datagram dg;
-    while (socket.receive(dg, false)) {
-        if (connections.count(dg.addr) > 0)
-            connections.at(dg.addr)->handlePacket(dg.data, (size_t) dg.dataSize);
-        else {
+    while (socket.receive(dg)) {
+		if (connections.count(dg.addr) > 0)
+			connections.at(dg.addr)->handlePacket(dg.data, (size_t)dg.dataSize);
+		else {
             if (!acceptConnections || (connectCallback != nullptr && !connectCallback(dg.addr)))
                 continue;
             std::shared_ptr<Connection> connection (new Connection(*this, dg.addr, true));

@@ -3,6 +3,7 @@
 #include <cstring>
 #include <algorithm>
 #include <tuple>
+#include <xge/util/DynamicStackArray.h>
 
 using namespace xge;
 
@@ -32,13 +33,15 @@ ImagePackerResult ImagePacker::build() {
         }
         return std::move(result);
     }
+	return ImagePackerResult();
 }
 
 ImagePackerResult ImagePacker::build(int width, int height) {
     XGEAssert(items.size() > 0);
     if (!areItemsSorted)
         std::sort(items.begin(), items.end());
-    std::vector<std::pair<int, int>> v[height];
+	typedef std::pair<int, int> int_pair;
+    StackArray(std::vector<int_pair>, v, height);
     for (int i = 0; i < height; i++)
         v[i].push_back({0, width});
     std::vector<std::tuple<int, int, int>> possibilitiesToCheck; // min x, max y, min y
@@ -55,7 +58,7 @@ ImagePackerResult ImagePacker::build(int width, int height) {
         int itemH = item.image.getHeight();
         for (int i = 0; i < height; i++) {
             auto oldPossibilitiesToCheck = std::move(possibilitiesToCheck);
-            for (std::pair<int, int> &p : v[i]) {
+            for (int_pair &p : v[i]) {
                 if (p.second - p.first < itemW)
                     continue;
                 if (itemH == 1) {
@@ -68,7 +71,7 @@ ImagePackerResult ImagePacker::build(int width, int height) {
                 for (auto pb : oldPossibilitiesToCheck) {
                     if (p.first > std::get<1>(pb))
                         break;
-                    int minX = std::max(p.first, std::get<0>(pb));
+                    int minX = std::max<int>(p.first, std::get<0>(pb));
                     int maxX = std::min(p.second, std::get<1>(pb));
                     if (minX == p.first && maxX == p.second) {
                         foundExact = true;

@@ -2,7 +2,7 @@
 
 #include <xge/Platform.h>
 
-class GLFWwindow;
+struct GLFWwindow;
 
 namespace xge {
 

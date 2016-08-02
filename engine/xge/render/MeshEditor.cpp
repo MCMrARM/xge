@@ -6,6 +6,7 @@
 #include <climits>
 #include <cstring>
 #include <xge/util/Log.h>
+#include <xge/util/DynamicStackArray.h>
 #include "Mesh.h"
 #include "ShaderValueType.h"
 
@@ -105,10 +106,10 @@ MeshEditor& MeshEditor::triangle(unsigned int i, glm::vec3 pos1, glm::vec3 pos2,
 
 void MeshEditor::commit() {
     size_t attribCount = config.attributes.size();
-    Mesh::AttributeValue *attribs [attribCount];
+    StackArray(Mesh::AttributeValue *, attribs, attribCount);
     for (size_t i = 0; i < attribCount; i++)
         attribs[i] = &mesh.attributes.at(config.attributes[i].attributeId);
-    std::vector<ShaderValue> attribValues[attribCount];
+	StackArray(std::vector<ShaderValue>, attribValues, attribCount);
     unsigned int startVertex = UINT32_MAX;
     unsigned int endVertex = UINT32_MAX;
     for (auto &p : editEntries) {
@@ -125,7 +126,7 @@ void MeshEditor::commit() {
         } else {
             // id not in order, upload & start new
             for (size_t i = 0; i < attribCount; i++) {
-                Mesh::AttributeValue &attrib = *attribs[i];
+                Mesh::AttributeValue &attrib = *(attribs[i]);
                 attrib.buffer.uploadFragment(attrib.attribute.type,
                                              startVertex * GetShaderValueTypeComponentCount(attribs[i]->attribute.type),
                                              attribValues[i]);

@@ -9,6 +9,8 @@ namespace xge {
     private:
         std::set<int> enabled;
 
+		void disableOpenGL(int id);
+
     public:
         static VertexAttribArrayManager instance;
 
@@ -22,15 +24,20 @@ namespace xge {
             return enabled;
         }
 
-        inline void set(std::set<int> const &v) {
-            for (int i : enabled) {
-                if (v.count(i) <= 0)
-                    disable(i);
-            }
-            for (int i : v) {
-                if (enabled.count(i) <= 0)
-                    enable(i);
-            }
+		inline void set(std::set<int> const &v) {
+			for (auto it = enabled.begin(); it != enabled.end(); ) {
+				if (v.count(*it) <= 0) {
+					disableOpenGL(*it);
+					it = enabled.erase(it);
+				}
+				else {
+					it++;
+				}
+			}
+			for (int i : v) {
+				if (enabled.count(i) <= 0)
+					enable(i);
+			}
         }
 
     };

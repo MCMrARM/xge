@@ -10,7 +10,9 @@
 #include <atomic>
 #include <cstring>
 #include <mutex>
+#ifndef _WINDOWS
 #include <netinet/in.h>
+#endif
 #include "DatagramSocket.h"
 #include "NetAddress.h"
 

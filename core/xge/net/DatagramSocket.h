@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <netinet/in.h>
 #include "NetAddress.h"
 
 namespace xge {
@@ -9,7 +8,7 @@ namespace xge {
     struct Datagram {
         sockaddr_in addr;
         char data[65507];
-        ssize_t dataSize;
+        long long int dataSize;
 
         operator bool() {
             return (dataSize > 0);
@@ -19,7 +18,11 @@ namespace xge {
     class DatagramSocket {
 
     private:
+#ifdef _WINDOWS
+		SOCKET fd;
+#else
         int fd;
+#endif
 
     public:
         /**
@@ -30,12 +33,12 @@ namespace xge {
         void close();
 
         Datagram receive();
-        bool receive(Datagram &dg, bool canBlock = true);
-        bool send(Datagram const &dg, bool canBlock = true);
+        bool receive(Datagram &dg);
+        bool send(Datagram const &dg);
         bool send(sockaddr_in addr, const char *data, size_t len, bool canBlock = true);
 
         inline int getFileDescriptor() {
-            return fd;
+            return (int) fd;
         }
 
         operator bool() {

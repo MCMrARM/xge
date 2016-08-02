@@ -2,7 +2,7 @@
 
 namespace xge {
 
-    class KeyboardEventListener;
+    struct KeyboardEventListener;
 
     struct ModifierKeysState {
         bool shift;

@@ -31,6 +31,7 @@ namespace xge {
             id = b.id;
             b.hasId = false;
             b.id = 0;
+			return *this;
         }
 
         inline unsigned int getId() {

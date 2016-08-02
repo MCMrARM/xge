@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <algorithm>
 
 namespace xge {
 
@@ -43,7 +44,7 @@ namespace xge {
             }
 
             const_iterator &operator++() {
-                off = std::min(off + getValueSize(), str.buf.size());
+                off = std::min<size_t>(off + getValueSize(), str.buf.size());
                 return *this;
             }
         };

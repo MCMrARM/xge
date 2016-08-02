@@ -1,7 +1,10 @@
 #pragma once
-
 #include <string>
+#ifdef _WINDOWS
+#include <winsock2.h>
+#else
 #include <netinet/in.h>
+#endif
 
 namespace xge {
 
@@ -29,7 +32,11 @@ namespace std {
     {
         size_t operator()(const xge::NetAddress &x) const
         {
+#ifdef _WINDOWS
+			return std::_Hash_seq((unsigned char *) &x.addr, sizeof(x.addr));
+#else
             return std::_Hash_impl::hash(&x.addr, sizeof(x.addr));
+#endif
         }
     };
 

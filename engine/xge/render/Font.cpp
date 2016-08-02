@@ -45,7 +45,7 @@ void Font::load(std::vector<char> data, unsigned int charHeight) {
     }
 
     fontData = std::move(data);
-    FT_Error error = FT_New_Memory_Face(ftLibrary, (const FT_Byte*) &fontData[0], fontData.size(), 0, &face);
+    FT_Error error = FT_New_Memory_Face(ftLibrary, (const FT_Byte*) &fontData[0], (FT_Long) fontData.size(), 0, &face);
     if (error) {
         Log::error("Font", "Failed to create font face (%i)", error);
         return;
@@ -71,15 +71,16 @@ Font::FontAtlas Font::buildAtlas(const std::vector<unsigned int> &characters) {
         }
         FT_Glyph_Metrics &metrics = face->glyph->metrics;
         size_t bmpSize = face->glyph->bitmap.width * face->glyph->bitmap.rows;
-        std::vector<unsigned char> bmp (bmpSize);
-        memcpy(&bmp[0], face->glyph->bitmap.buffer, bmpSize);
 
         std::string charName;
         charName.resize(sizeof(unsigned int));
         memcpy(&charName[0], &ch, sizeof(unsigned int));
-        if (face->glyph->bitmap.width != 0)
-            imgPacker.add(charName, Image (std::move(bmp), face->glyph->bitmap.width, face->glyph->bitmap.rows,
-                                           ImageFormat::GRAY));
+		if (bmpSize > 0) {
+			std::vector<unsigned char> bmp(bmpSize);
+			memcpy(&bmp[0], face->glyph->bitmap.buffer, bmpSize);
+			imgPacker.add(charName, Image(std::move(bmp), face->glyph->bitmap.width, face->glyph->bitmap.rows,
+				ImageFormat::GRAY));
+		}
 
         ret.chars[ch] = { glm::vec2(), glm::vec2(), (float) face->glyph->bitmap_left,
                           (metrics.horiBearingY - metrics.height) / 64.f, metrics.horiAdvance / 64.f,
@@ -114,7 +115,7 @@ std::pair<Font::FontAtlas *, Font::FontChar *> Font::getChar(unsigned int ch) {
         } else {
             std::vector<unsigned int> chars;
             unsigned int baseId = atlasId * charsPerUnicodeAtlas + 128;
-            for (int i = 0; i < charsPerUnicodeAtlas; i++)
+            for (unsigned int i = 0; i < charsPerUnicodeAtlas; i++)
                 chars.push_back(baseId + i);
             unicodeAtlases.insert({ atlasId, buildAtlas(chars) });
             atlas = &unicodeAtlases.at(atlasId);

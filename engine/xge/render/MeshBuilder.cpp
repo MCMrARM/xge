@@ -22,6 +22,34 @@ using namespace xge;
         pushValTypeFloat(vector, val.w); \
     }
 
+#ifdef _WINDOWS
+template <typename... T>
+MeshBuilder &MeshBuilder::push(T...) {
+    vertexCount++;
+	auto it = config.attributes.begin();
+    auto itV = attributeValues.begin();
+	for (auto t : ...) {
+        switch (it->type) {
+            case ShaderValueType::Float:
+                pushValTypeFloat(itV, t);
+                break;
+            case ShaderValueType::Vec2:
+                pushValTypeVec2(itV, t);
+                break;
+            case ShaderValueType::Vec3:
+                pushValTypeVec3(itV, t);
+                break;
+            case ShaderValueType::Vec4:
+                pushValTypeVec4(itV, t);
+                break;
+            default:
+                break;
+        }
+		it++; itV++;
+    }
+    return *this;
+}
+#else
 MeshBuilder &MeshBuilder::push(...) {
     va_list args;
     va_start(args, this);
@@ -54,6 +82,7 @@ MeshBuilder &MeshBuilder::push(...) {
     va_end(args);
     return *this;
 }
+#endif
 
 MeshBuilder &MeshBuilder::triangle(glm::vec3 pos1, glm::vec3 pos2, glm::vec3 pos3, glm::vec2 uv1, glm::vec2 uv2, glm::vec2 uv3,
                            glm::vec4 color1, glm::vec4 color2, glm::vec4 color3) {

@@ -3,6 +3,7 @@
 #include <png.h>
 #include <xge/util/InputStream.h>
 #include <xge/util/Resources.h>
+#include <xge/util/DynamicStackArray.h>
 
 using namespace xge;
 
@@ -14,6 +15,8 @@ unsigned int xge::GetBytesPerPixel(ImageFormat format) {
             return 3;
         case ImageFormat::RGBA:
             return 4;
+		default:
+			return 0;
     }
 }
 
@@ -90,9 +93,9 @@ Image Image::fromStream(InputStream &stream) {
 
     png_size_t rowBytes = png_get_rowbytes(png_ptr, info_ptr);
 
-    png_byte* rows[height];
+    StackArray(png_byte *, rows, height);
     std::vector<unsigned char> data(rowBytes * height);
-    for (int i = 0; i < height; i++)
+    for (unsigned int i = 0; i < height; i++)
         rows[i] = &data[(height - 1 - i) * rowBytes];
 
     png_read_image(png_ptr, rows);

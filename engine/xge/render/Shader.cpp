@@ -4,6 +4,7 @@
 #include <xge/opengl.h>
 #include <xge/util/Resources.h>
 #include <xge/util/Log.h>
+#include <xge/util/DynamicStackArray.h>
 #include "Texture.h"
 #include "VertexAttribArrayManager.h"
 
@@ -48,8 +49,8 @@ void Shader::setSource(int sourceCount, const char **sources, int *sourceLengths
 }
 
 void Shader::setSource(std::vector<std::string> sources) {
-    const char *pSources[sources.size()];
-    int pSourcesLengths[sources.size()];
+    StackArray(const char *, pSources, sources.size());
+	StackArray(int, pSourcesLengths, sources.size());
     int i = 0;
     for (auto it = sources.begin(); it != sources.end(); it++) {
         pSources[i] = it->data();
@@ -59,8 +60,8 @@ void Shader::setSource(std::vector<std::string> sources) {
 }
 
 void Shader::setSource(std::vector<std::vector<char>> sources) {
-    const char *pSources[sources.size()];
-    int pSourcesLengths[sources.size()];
+	StackArray(const char *, pSources, sources.size());
+	StackArray(int, pSourcesLengths, sources.size());
     int i = 0;
     for (auto it = sources.begin(); it != sources.end(); it++) {
         pSources[i] = it->data();

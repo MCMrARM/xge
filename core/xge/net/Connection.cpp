@@ -2,8 +2,11 @@
 
 #include <cstring>
 #include <climits>
+#ifndef _WINDOWS
 #include <arpa/inet.h>
+#endif
 #include <xge/util/Log.h>
+#include <xge/util/DynamicStackArray.h>
 #include "ConnectionHandler.h"
 
 using namespace xge;
@@ -79,7 +82,7 @@ void Connection::send(PacketId pkId, char *msg, size_t len, unsigned char channe
 
         size_t off = 0;
         while (off < fragTotalSize) {
-            size_t size = std::min(mtu - fragHeaderSize, fragTotalSize - off);
+            size_t size = std::min<size_t>(mtu - fragHeaderSize, fragTotalSize - off);
             std::vector<char> pk (size + fragHeaderSize);
             memcpy(&pk[0], &fragHeader, 8);
             ((unsigned short &) pk[8]) = (unsigned short) (mtu - fragHeaderSize);
@@ -150,7 +153,7 @@ void Connection::handlePacket(char *msg, size_t len) {
         FragmentedPacketData &pk = fragmentedPackets[fragId];
         pk.setSize(fragTotalSize, (fragTotalSize + fragPkSize - 1) / fragPkSize);
         size_t off = fragPkIndex * fragPkSize;
-        size_t size = std::min(len - 10, (size_t) fragPkSize);
+        size_t size = std::min<size_t>(len - 10, (size_t) fragPkSize);
         if (off + size >= fragTotalSize)
             return;
         memcpy(&pk.data[off], msg, size);
@@ -253,7 +256,7 @@ void Connection::handleSystemMessage(char *msg, size_t len) {
         unsigned short pkMtu = ((unsigned short &) msg[1]);
         if (pkMtu < 100 || pkMtu >= 3000)
             return;
-        if (len >= pkMtu - 1) {
+        if (len >= (size_t) (pkMtu - 1)) {
             mtu = pkMtu;
             hasNegotiatedMTU = true;
             sendMTUAccepted(mtu);
@@ -273,7 +276,7 @@ void Connection::handleSystemMessage(char *msg, size_t len) {
             return;
         unsigned short pkId = ((unsigned short &) msg[1]);
         unsigned short count = ((unsigned short &) msg[3]);
-        if (count * 4 + 5 > len)
+        if ((size_t) (count * 4 + 5) > len)
             return; // not enough data
         size_t off = 5;
         sendReliablePacketsMutex.lock();
@@ -342,12 +345,14 @@ int Connection::send(char *msg, size_t len, unsigned char channel, const ACKCall
     XGEAssert(hasNegotiatedMTU);
     PacketId pkId = { 0, 0, 1, 1, (channel == 0 ? 1 : 0), (ackCallback != nullptr ? 1 : 0), 0 };
     send(pkId, msg, len, channel, ackCallback, nullptr);
+	return 0;
 }
 
 int Connection::sendUnordered(char *msg, size_t len, const ACKCallback &ackCallback) {
     XGEAssert(hasNegotiatedMTU);
     PacketId pkId = { 0, 0, 1, 0, 0, (ackCallback != nullptr ? 1 : 0), 0 };
     send(pkId, msg, len, 0, ackCallback, nullptr);
+	return 0;
 }
 
 void Connection::sendUnreliable(char *msg, size_t len, const ACKCallback &ack, const ACKCallback &nack) {
@@ -381,13 +386,13 @@ void Connection::sendMTUTest(unsigned short mtu) {
     PacketId pkId = { 0, 1, 0, 0, 0, 0, 0 };
 
     XGEAssert(mtu > 4);
-    char msg[mtu];
+    StackArray(char, msg, mtu);
     msg[0] = *((char *) &pkId);
     msg[1] = 0x03; // mtu test
     ((unsigned short &) msg[2]) = mtu;
     memset(&msg[4], 0, (size_t) (mtu - 4));
 
-    sendRaw(msg, sizeof(msg)); // send raw, so it won't get fragmented in any way
+    sendRaw(&msg[0], mtu); // send raw, so it won't get fragmented in any way
 }
 
 void Connection::sendMTUAccepted(unsigned short mtu) {
@@ -426,7 +431,8 @@ void Connection::buildAndSendACKList(const std::set<unsigned short> &list, bool 
             acks.push_back({*it, *it});
         }
     }
-    char msg[headerBaseSize + acks.size() * 4];
+	size_t msgSize = headerBaseSize + acks.size() * 4;
+    StackArray(char, msg, msgSize);
     PacketId pkId = { 0, 1, 0, 0, 0, 0, 0 };
     msg[0] = *((char *) &pkId);
     msg[1] = (char) (isReliable ? 0x10 : 0x11); // ack (reliable / unreliable)
@@ -442,7 +448,7 @@ void Connection::buildAndSendACKList(const std::set<unsigned short> &list, bool 
         sentAckReliablePackets.insert({index, std::move(acks)});
     else
         sentAckUnreliablePackets.insert({index, std::move(acks)});
-    sendRaw(msg, sizeof(msg));
+    sendRaw(msg, msgSize);
 }
 
 void Connection::update() {

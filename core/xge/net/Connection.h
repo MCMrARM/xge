@@ -43,7 +43,12 @@ namespace xge {
         std::chrono::milliseconds reliablePacketIdReuseTime;
         std::chrono::milliseconds ackSendTime;
 
-        struct __attribute__((__packed__)) PacketId {
+#ifdef _WINDOWS
+#pragma pack(push, 1)
+		struct PacketId {
+#else
+		struct __attribute__((__packed__)) PacketId {
+#endif
             int special : 2;
             int system : 1;
             int reliable : 1;
@@ -52,7 +57,10 @@ namespace xge {
             int ack : 1;
             int fragmented : 1;
         };
-        static_assert(sizeof(PacketId) == 1, "PacketId is not byte-sized");
+#ifdef _WINDOWS
+#pragma pack(pop)
+#endif
+        //TODO:static_assert(sizeof(PacketId) == 1, "PacketId is not byte-sized");
         struct ReliableSendPacket {
             std::chrono::steady_clock::time_point time;
             std::vector<char> data;

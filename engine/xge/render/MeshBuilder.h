@@ -135,7 +135,12 @@ namespace xge {
         /**
          * This function pushes a vertex onto the list. The argument count should equal the count of attributes.
          */
+#ifdef _WINDOWS
+		template<typename... T>
+        MeshBuilder &push(T...);
+#else
         MeshBuilder &push(...);
+#endif
 
         /**
          * This function returns how many vertex were already pushed.
@@ -203,6 +208,14 @@ namespace xge {
         }
         inline MeshBuilder &rectColor(glm::vec2 pos1, glm::vec2 pos2, glm::vec4 color) {
             return rect(pos1, pos2, glm::vec2(0.f, 0.f), glm::vec2(0.f, 0.f), color, color, color, color);
+        }
+
+        // rect2 - draw the rectangle using an alternative way (useful if you use this function to draw gradients)
+        inline MeshBuilder &rect2(glm::vec2 pos1, glm::vec2 pos2, glm::vec2 uv1, glm::vec2 uv2,
+                                 glm::vec4 color1, glm::vec4 color2, glm::vec4 color3, glm::vec4 color4) {
+            return quad(glm::vec3(pos2.x, pos1.y, 0.f), glm::vec3(pos2.x, pos2.y, 0.f), glm::vec3(pos1.x, pos2.y, 0.f),
+                        glm::vec3(pos1.x, pos1.y, 0.f), glm::vec2(uv2.x, uv1.y), uv2, glm::vec2(uv1.x, uv2.y), uv1,
+                        color4, color3, color2, color1);
         }
 
         inline MeshBuilder &setPrimaryTexture(std::shared_ptr<Texture> texture) {

@@ -19,3 +19,7 @@ void VertexAttribArrayManager::disable(int id) {
         glDisableVertexAttribArray((GLuint) id);
     }
 }
+
+void VertexAttribArrayManager::disableOpenGL(int id) {
+	glDisableVertexAttribArray((GLuint)id);
+}

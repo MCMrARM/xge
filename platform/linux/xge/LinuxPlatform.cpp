@@ -4,6 +4,9 @@
 #include <xge/Game.h>
 #include <xge/util/Log.h>
 #include <cstdlib>
+#ifdef _WINDOWS
+#include <WinSock2.h>
+#endif
 
 using namespace xge;
 
@@ -30,6 +33,12 @@ void LinuxPlatform::startGame(Game &game) {
         Log::error("GLFW", "Call to glfwInit failed");
         return;
     }
+#ifdef _WINDOWS
+	WSADATA wsaData;
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData)) {
+		Log::error("WinSock2", "Failed to initialize WinSock2 library - socket communication will not work");
+	}
+#endif
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwSwapInterval(1);
     window = glfwCreateWindow(640, 480, "Game", NULL, NULL);
@@ -59,6 +68,9 @@ void LinuxPlatform::startGame(Game &game) {
     }
     gameInstance = nullptr;
     glfwTerminate();
+#ifdef _WINDOWS
+	WSACleanup();
+#endif
 }
 
 void LinuxPlatform::glfwWindowSizeCallback(GLFWwindow *window, int w, int h) {

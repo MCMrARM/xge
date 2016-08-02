@@ -1,7 +1,9 @@
 #include "NetAddress.h"
 
 #include <cstring>
+#ifndef _WINDOWS
 #include <arpa/inet.h>
+#endif
 
 using namespace xge;
 

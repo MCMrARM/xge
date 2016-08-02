@@ -6,7 +6,7 @@
 using namespace xge;
 
 void GPUBuffer::createBuffer() {
-    glCreateBuffers(1, &id);
+	glGenBuffers(1, &id);
     hasId = true;
 }
 

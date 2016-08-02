@@ -8,8 +8,8 @@
 #include <glm/vec4.hpp>
 #include "MeshBuilderConfig.h"
 
-class FT_LibraryRec_;
-class FT_FaceRec_;
+struct FT_LibraryRec_;
+struct FT_FaceRec_;
 
 namespace xge {
 
