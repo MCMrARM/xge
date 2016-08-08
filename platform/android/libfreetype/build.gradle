@@ -1,0 +1,49 @@
+apply plugin: 'com.android.model.library'
+
+model {
+    android {
+        compileSdkVersion = 23
+        buildToolsVersion = '23.0.2'
+
+        defaultConfig {
+            minSdkVersion.apiLevel = 9
+            targetSdkVersion.apiLevel = 23
+        }
+        ndk {
+            platformVersion = 9
+            moduleName = 'freetype'
+            toolchain = 'clang'
+            stl = 'c++_static'
+            CFlags.add("-I" + file("../../../dependencies/mobile/freetype/include").absolutePath)
+            CFlags.add("-DFT2_BUILD_LIBRARY")
+        }
+        sources {
+            main {
+                jni {
+                    source {
+                        srcDir "../../../dependencies/mobile/freetype/src"
+                        exclude fileTree("../../../dependencies/mobile/freetype/src/") {
+                            include "**/*.c"
+                            include "**/*.cc"
+                        }.collect({
+                            it.getAbsolutePath().substring(
+                                it.getAbsolutePath().indexOf("freetype/src/")
+                                        + "freetype/src/".length()) }) - [
+                                "base/ftbase.c", "base/ftinit.c", "base/ftsystem.c",
+                                "base/ftglyph.c", "base/ftbitmap.c", "autofit/autofit.c", "bdf/bdf.c",
+                                "bzip2/ftbzip2.c", "cache/ftcache.c", "cff/cff.c", "cid/type1cid.c",
+                                "gxvalid/gxvalid.c", "gzip/ftgzip.c", "lzw/ftlzw.c",
+                                "otvalid/otvalid.c", "pcf/pcf.c", "pfr/pfr.c", "psaux/psaux.c",
+                                "pshinter/pshinter.c", "psnames/psnames.c", "raster/raster.c",
+                                "sfnt/sfnt.c", "smooth/smooth.c", "truetype/truetype.c",
+                                "type1/type1.c", "type42/type42.c", "winfonts/winfnt.c"
+                        ]
+                    }
+                    exportedHeaders {
+                        srcDir "../../../dependencies/mobile/freetype/include"
+                    }
+                }
+            }
+        }
+    }
+}

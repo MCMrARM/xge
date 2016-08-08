@@ -1,6 +1,6 @@
 #include "VertexAttribArrayManager.h"
 
-#include <GL/glew.h>
+#include <xge/opengl.h>
 
 using namespace xge;
 

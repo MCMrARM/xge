@@ -187,7 +187,7 @@ namespace xge {
          */
         int sendUnordered(char *msg, size_t len, const ACKCallback &ackCallback = nullptr);
         inline int sendUnordered(std::vector<char> msg, const ACKCallback &ackCallback = nullptr) {
-            sendUnordered(msg.data(), msg.size(), ackCallback);
+            return sendUnordered(msg.data(), msg.size(), ackCallback);
         }
 
         /**

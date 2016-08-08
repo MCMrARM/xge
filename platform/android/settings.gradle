@@ -1,0 +1,1 @@
+include ':xge-core', ':nativeactivity', ':xge', ':libpng', ':libfreetype', ':libglm'

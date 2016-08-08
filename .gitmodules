@@ -1,0 +1,9 @@
+[submodule "dependencies/mobile/png"]
+	path = dependencies/mobile/png
+	url = https://github.com/glennrp/libpng.git
+[submodule "dependencies/mobile/glm"]
+	path = dependencies/mobile/glm
+	url = https://github.com/g-truc/glm.git
+[submodule "dependencies/mobile/freetype"]
+	path = dependencies/mobile/freetype
+	url = git://git.sv.nongnu.org/freetype/freetype2.git

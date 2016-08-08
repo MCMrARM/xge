@@ -60,7 +60,7 @@ namespace xge {
         std::string throwStr;
 
     public:
-        ShaderCompileError(std::string str) : errorStr(errorStr) {
+        ShaderCompileError(std::string str) : errorStr(str) {
             throwStr = "Failed to compile shader: " + str;
         }
 

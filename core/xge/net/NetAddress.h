@@ -34,6 +34,8 @@ namespace std {
         {
 #ifdef _WINDOWS
 			return std::_Hash_seq((unsigned char *) &x.addr, sizeof(x.addr));
+#elif __ANDROID__
+            return std::__murmur2_or_cityhash<size_t>()(&x.addr, sizeof(x.addr));
 #else
             return std::_Hash_impl::hash(&x.addr, sizeof(x.addr));
 #endif

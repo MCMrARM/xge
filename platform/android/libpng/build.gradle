@@ -1,0 +1,38 @@
+apply plugin: 'com.android.model.library'
+
+model {
+    android {
+        compileSdkVersion = 23
+        buildToolsVersion = '23.0.2'
+
+        defaultConfig {
+            minSdkVersion.apiLevel = 9
+            targetSdkVersion.apiLevel = 23
+        }
+        ndk {
+            platformVersion = 9
+            moduleName = 'png'
+            toolchain = 'clang'
+            stl = 'c++_static'
+            CFlags.add("-I" + file("src/main/jni/").absolutePath)
+            ldLibs.add("z")
+        }
+        sources {
+            main {
+                jni {
+                    source {
+                        srcDir "../../../dependencies/mobile/png"
+                        exclude "pngtest.c"
+                        exclude "example.c"
+                        exclude "arm/*"
+                        exclude "contrib/*"
+                        exclude "scripts/*"
+                    }
+                    exportedHeaders {
+                        srcDirs = ["../../../dependencies/mobile/png", "src/main/jni/"]
+                    }
+                }
+            }
+        }
+    }
+}

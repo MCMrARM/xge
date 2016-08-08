@@ -21,18 +21,26 @@ Shader::Shader(ShaderType type) : type(type) {
         case ShaderType::Fragment:
             shaderType = GL_FRAGMENT_SHADER;
             break;
+#ifdef GL_COMPUTE_SHADER
         case ShaderType::Compute:
             shaderType = GL_COMPUTE_SHADER;
             break;
+#endif
+#ifdef GL_GEOMETRY_SHADER
         case ShaderType::Geometry:
             shaderType = GL_GEOMETRY_SHADER;
             break;
+#endif
+#ifdef GL_TESS_CONTROL_SHADER
         case ShaderType::TessControl:
             shaderType = GL_TESS_CONTROL_SHADER;
             break;
+#endif
+#ifdef GL_TESS_EVALUATION_SHADER
         case ShaderType::TessEvaluation:
             shaderType = GL_TESS_EVALUATION_SHADER;
             break;
+#endif
     }
     id = glCreateShader(shaderType);
     if (id == 0)
@@ -189,6 +197,7 @@ void ShaderUniform::set(ShaderValue *value, int count) {
         case ShaderValueType::IVec4:
             glUniform4iv(uniformId, count, (int*) value);
             break;
+#ifdef glUniform1uiv
         case ShaderValueType::UInt:
             glUniform1uiv(uniformId, count, (unsigned int*) value);
             break;
@@ -201,6 +210,7 @@ void ShaderUniform::set(ShaderValue *value, int count) {
         case ShaderValueType::UIVec4:
             glUniform4uiv(uniformId, count, (unsigned int*) value);
             break;
+#endif
         case ShaderValueType::Matrix2:
             glUniformMatrix2fv(uniformId, count, GL_FALSE, (float*) value);
             break;
