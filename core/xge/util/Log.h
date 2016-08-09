@@ -18,7 +18,10 @@
         abort(); \
     }
 #else
-#define XGEAssert(assert)
+#define XGEAssert(assert) \
+    if (!(assert)) { \
+        abort(); \
+    }
 #endif
 
 namespace xge {

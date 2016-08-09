@@ -4,6 +4,8 @@
 #include <xge/Game.h>
 #include <xge/util/Log.h>
 #include <cstdlib>
+#include <xge/util/Resources.h>
+
 #ifdef _WINDOWS
 #include <WinSock2.h>
 #endif
@@ -12,16 +14,25 @@ using namespace xge;
 
 LinuxPlatform *LinuxPlatform::instance = nullptr;
 
-LinuxPlatform::LinuxPlatform() {
+LinuxPlatform::LinuxPlatform() : assetResources("assets/"), dataResources("data/") {
     if (LinuxPlatform::instance != nullptr) {
         Log::error("LinuxPlatform", "There can be only one LinuxPlatform instance at a time.");
         throw std::logic_error("There can be only one LinuxPlatform instance at a time.");
     }
     LinuxPlatform::instance = this;
+    Resources::assets = &assetResources;
+    Resources::userData = &dataResources;
 }
 
 LinuxPlatform::~LinuxPlatform() {
     LinuxPlatform::instance = nullptr;
+}
+
+float LinuxPlatform::getMonitorDPI(GLFWmonitor* monitor) {
+    const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+    int widthMM, heightMM;
+    glfwGetMonitorPhysicalSize(monitor, &widthMM, &heightMM);
+    return mode->width / (widthMM / 25.4f);
 }
 
 void LinuxPlatform::startGame(Game &game) {
@@ -42,7 +53,7 @@ void LinuxPlatform::startGame(Game &game) {
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwSwapInterval(1);
     window = glfwCreateWindow(640, 480, "Game", NULL, NULL);
-    game.setSize(640, 480);
+    game.setSize(640, 480, getMonitorDPI(glfwGetPrimaryMonitor()));
     if (!window) {
         Log::error("GLFW", "Couldn't create window");
         glfwTerminate();
@@ -75,7 +86,7 @@ void LinuxPlatform::startGame(Game &game) {
 
 void LinuxPlatform::glfwWindowSizeCallback(GLFWwindow *window, int w, int h) {
     glViewport(0, 0, w, h);
-    LinuxPlatform::instance->gameInstance->setSize(w, h);
+    LinuxPlatform::instance->gameInstance->setSize(w, h, getMonitorDPI(glfwGetWindowMonitor(window)));
 }
 
 void LinuxPlatform::glfwMousePosCallback(GLFWwindow *window, double xpos, double ypos) {

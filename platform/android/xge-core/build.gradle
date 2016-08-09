@@ -26,10 +26,6 @@ model {
                     exportedHeaders {
                         srcDir "../../../core/"
                     }
-
-                    dependencies {
-                        project ':nativeactivity' linkage 'static'
-                    }
                 }
             }
         }

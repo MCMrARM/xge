@@ -3,6 +3,7 @@
 #include <set>
 #include <memory>
 #include <xge/input/Mouse.h>
+#include <xge/input/Touch.h>
 #include <xge/input/Keyboard.h>
 #include <xge/input/PointerEventListener.h>
 #include <xge/input/KeyboardEventListener.h>
@@ -14,14 +15,16 @@ namespace xge {
 
     private:
         int w = 0, h = 0;
+        float dpi = 0.f;
         Mouse mouse;
+        Touch touch;
         std::set<std::shared_ptr<PointerEventListener>> pointerListeners;
         Keyboard keyboard;
         std::set<std::shared_ptr<KeyboardEventListener>> keyboardListeners;
         GameTime time;
 
     public:
-        Game() : mouse(*this), keyboard(*this) {
+        Game() : mouse(*this), touch(*this), keyboard(*this) {
             //
         }
 
@@ -34,12 +37,17 @@ namespace xge {
 
         virtual void draw(GameTime const &time) { }
 
+        virtual void suspend() { }
+
+        virtual void resume() { }
+
         /**
          * This function will be called even before init and will initialize the window/screen size.
          */
-        virtual void setSize(int w, int h) {
+        virtual void setSize(int w, int h, float dpi) {
             this->w = w;
             this->h = h;
+            this->dpi = dpi;
         }
         inline int getWidth() const {
             return w;
@@ -47,9 +55,15 @@ namespace xge {
         inline int getHeight() const {
             return h;
         }
+        inline float getScreenDPI() const {
+            return dpi;
+        }
 
         inline Mouse &getMouse() {
             return mouse;
+        }
+        inline Touch &getTouch() {
+            return touch;
         }
         inline Keyboard &getKeyboard() {
             return keyboard;

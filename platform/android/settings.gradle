@@ -1,1 +1,1 @@
-include ':xge-core', ':nativeactivity', ':xge', ':libpng', ':libfreetype', ':libglm'
+include ':xge-core', ':nativeactivity', ':xge', ':libpng', ':libfreetype', ':libglm', ':xge-java'

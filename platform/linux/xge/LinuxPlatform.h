@@ -1,8 +1,10 @@
 #pragma once
 
 #include <xge/Platform.h>
+#include <xge/util/Resources.h>
 
 struct GLFWwindow;
+struct GLFWmonitor;
 
 namespace xge {
 
@@ -12,9 +14,12 @@ namespace xge {
 
     private:
         static LinuxPlatform *instance;
+        FileResources assetResources, dataResources;
 
         int winW = 640, winH = 480;
         GLFWwindow *window;
+
+        static float getMonitorDPI(GLFWmonitor *monitor);
 
         static void glfwWindowSizeCallback(GLFWwindow *window, int w, int h);
         static void glfwMousePosCallback(GLFWwindow *window, double xpos, double ypos);
