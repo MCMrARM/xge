@@ -86,7 +86,7 @@ void LinuxPlatform::startGame(Game &game) {
 
 void LinuxPlatform::glfwWindowSizeCallback(GLFWwindow *window, int w, int h) {
     glViewport(0, 0, w, h);
-    LinuxPlatform::instance->gameInstance->setSize(w, h, getMonitorDPI(glfwGetWindowMonitor(window)));
+    LinuxPlatform::instance->gameInstance->setSize(w, h, getMonitorDPI(glfwGetPrimaryMonitor()));
 }
 
 void LinuxPlatform::glfwMousePosCallback(GLFWwindow *window, double xpos, double ypos) {

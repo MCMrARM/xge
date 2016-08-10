@@ -202,6 +202,7 @@ void Connection::handlePacket(char *msg, size_t len) {
                 else
                     receivedOrderedPacketIndex[channel]++;
                 // checks for packets that have arrived later
+                orderId = receivedOrderedPacketIndex[channel];
                 for (auto it = channelOrderedPacketList.find(orderId); it != channelOrderedPacketList.end(); ) {
                     if (it->first == receivedOrderedPacketIndex[channel]) {
                         handler.addUserPacket(*this, std::move(it->second));
