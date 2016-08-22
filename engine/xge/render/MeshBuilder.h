@@ -136,8 +136,14 @@ namespace xge {
          * This function pushes a vertex onto the list. The argument count should equal the count of attributes.
          */
 #ifdef _WINDOWS
+	private:
+		MeshBuilder &_push(int stub, ...);
+
+	public:
 		template<typename... T>
-        MeshBuilder &push(T...);
+        MeshBuilder &push(T... args) {
+			return _push(0, args...);
+		}
 #else
         MeshBuilder &push(...);
 #endif
